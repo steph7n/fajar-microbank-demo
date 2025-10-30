@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tambah Nasabah Baru - Fajar Microbank</title>
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --accent: #2ecc71;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: #fafafa;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: white;
+      border-bottom: 4px solid var(--accent);
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+    }
+
+    header .material-icons {
+      color: var(--accent);
+      cursor: pointer;
+      margin-right: 8px;
+    }
+
+    header h1 {
+      font-size: 1.1rem;
+      color: #333;
+      margin: 0;
+    }
+
+    main {
+      max-width: 480px;
+      margin: 30px auto;
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .desc {
+      font-size: 0.85rem;
+      color: #777;
+      margin-top: -4px;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 6px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .error {
+      color: red;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+      min-height: 18px;
+    }
+
+    button.submit-btn {
+      width: 100%;
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button.submit-btn:disabled {
+      background-color: #bbb;
+      cursor: not-allowed;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #777;
+      font-size: 0.85rem;
+    }
+
+    /* Dialogs */
+    .dialog-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .dialog {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .dialog h2 {
+      margin-top: 0;
+      color: #333;
+    }
+
+    .dialog p {
+      text-align: left;
+      margin: 6px 0;
+      color: #555;
+      word-break: break-word;
+    }
+
+    .dialog button {
+      margin-top: 16px;
+      margin-right: 6px;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .confirm {
+      background-color: var(--accent);
+      color: white;
+    }
+
+    .cancel {
+      background-color: #ccc;
+      color: #333;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <span class="material-icons" onclick="goHome()">arrow_back</span>
+    <h1>Tambah Nasabah Baru</h1>
+  </header>
+
+  <main>
+    <label for="name">Nama Lengkap</label>
+    <input type="text" id="name" placeholder="Nama lengkap" />
+    <div class="desc">Nama lengkap sesuai KTP</div>
+    <div id="nameError" class="error"></div>
+
+    <label for="phone">Nomor HP</label>
+    <input type="text" id="phone" placeholder="08xxxxxxxxx" />
+    <div class="desc">Masukkan dengan format 08xxxxxxxxx</div>
+    <div id="phoneError" class="error"></div>
+
+    <label for="nik">NIK</label>
+    <input type="text" id="nik" placeholder="16 digit nomor KTP" maxlength="16" />
+    <div class="desc">Nomor KTP</div>
+    <div id="nikError" class="error"></div>
+
+    <button id="submitBtn" class="submit-btn" disabled>Simpan Nasabah</button>
+  </main>
+
+  <footer>Hak Cipta © 2025 Toko Mas Fajar</footer>
+
+  <!-- Confirmation Dialog -->
+  <div id="confirmDialog" class="dialog-overlay">
+    <div class="dialog">
+      <h2>Konfirmasi Penambahan Nasabah</h2>
+      <p id="confName"></p>
+      <p id="confPhone"></p>
+      <p id="confNik"></p>
+      <p id="confAcc"></p>
+      <button class="confirm" onclick="saveCustomer()">Simpan</button>
+      <button class="cancel" onclick="closeDialog('confirmDialog')">Batal</button>
+    </div>
+  </div>
+
+  <!-- Success Dialog -->
+  <div id="successDialog" class="dialog-overlay">
+    <div class="dialog">
+      <h2>Nasabah Baru Berhasil Ditambahkan</h2>
+      <p id="successName"></p>
+      <p id="successPhone"></p>
+      <p id="successNik"></p>
+      <div style="text-align:left; margin-top:10px;">
+        <p id="successAcc" style="display:inline; margin-right:6px;"></p>
+        <span style="display:inline-flex; align-items:center; cursor:pointer; color:var(--accent);" title="Salin Nomor Rekening" onclick="copyAccountNumber()">
+          <span class="material-icons" style="font-size:18px; margin-right:2px;">content_copy</span>Copy
+        </span>
+      </div>
+      <div id="copyNotice" style="font-size:0.85rem; color:#777; margin-top:6px; display:none; text-align:left;">Nomor rekening disalin ke clipboard</div>
+      <button class="confirm" onclick="goHome()">Kembali ke Beranda</button>
+      <button class="cancel" onclick="addAnother()">Tambah Lagi</button>
+    </div>
+  </div>
+
+  <script>
+    const customers = [
+      { name: "John Doe", phone: "08123456789", nik: "3201010101010001" }
+    ];
+
+    const nameInput = document.getElementById("name");
+    const phoneInput = document.getElementById("phone");
+    const nikInput = document.getElementById("nik");
+    const submitBtn = document.getElementById("submitBtn");
+
+    const nameError = document.getElementById("nameError");
+    const phoneError = document.getElementById("phoneError");
+    const nikError = document.getElementById("nikError");
+
+    let nextSequence = 47; // Mock sequence generator
+    let generatedAcc = "";
+
+    function validateForm() {
+      let valid = true;
+
+      // Name validation
+      if (nameInput.value.trim().length < 3) {
+        nameError.textContent = "Nama minimal 3 karakter.";
+        valid = false;
+      } else {
+        nameError.textContent = "";
+      }
+
+      // Phone validation
+      const cleanPhone = phoneInput.value.replace(/[^\d]/g, ""); // Remove punctuation/spaces
+      if (!/^08\d{8,}$/.test(cleanPhone)) {
+        phoneError.textContent = "Nomor HP tidak valid.";
+        valid = false;
+      } else if (customers.find(c => c.phone === cleanPhone)) {
+        phoneError.textContent = "Nomor HP ini sudah terdaftar.";
+        valid = false;
+      } else {
+        phoneError.textContent = "";
+      }
+
+      // NIK validation
+      const cleanNik = nikInput.value.replace(/[^\d]/g, "");
+      if (cleanNik.length !== 16) {
+        nikError.textContent = "NIK harus 16 digit angka.";
+        valid = false;
+      } else {
+        nikError.textContent = "";
+      }
+
+      submitBtn.disabled = !valid;
+    }
+
+    nameInput.addEventListener("input", validateForm);
+    phoneInput.addEventListener("input", validateForm);
+    nikInput.addEventListener("input", validateForm);
+
+    submitBtn.addEventListener("click", () => {
+      const cleanPhone = phoneInput.value.replace(/[^\d]/g, "");
+      const cleanNik = nikInput.value.replace(/[^\d]/g, "");
+      generatedAcc = "111" + String(nextSequence).padStart(5, "0");
+
+      document.getElementById("confName").textContent = "Nama: " + nameInput.value.trim();
+      document.getElementById("confPhone").textContent = "Nomor HP: " + cleanPhone;
+      document.getElementById("confNik").textContent = "NIK: " + cleanNik;
+      document.getElementById("confAcc").textContent = "Nomor Rekening Baru: " + generatedAcc;
+
+      document.getElementById("confirmDialog").style.display = "flex";
+    });
+
+    function saveCustomer() {
+      const cleanPhone = phoneInput.value.replace(/[^\d]/g, "");
+      const cleanNik = nikInput.value.replace(/[^\d]/g, "");
+      customers.push({
+        name: nameInput.value.trim(),
+        phone: cleanPhone,
+        nik: cleanNik
+      });
+      nextSequence++;
+
+      document.getElementById("successName").textContent = "Nama: " + nameInput.value.trim();
+      document.getElementById("successPhone").textContent = "Nomor HP: " + cleanPhone;
+      document.getElementById("successNik").textContent = "NIK: " + cleanNik;
+      document.getElementById("successAcc").textContent = "Nomor Rekening: " + generatedAcc;
+
+      closeDialog("confirmDialog");
+      document.getElementById("successDialog").style.display = "flex";
+    }
+
+    function addAnother() {
+      closeDialog("successDialog");
+      nameInput.value = "";
+      phoneInput.value = "";
+      nikInput.value = "";
+      validateForm();
+    }
+
+    function closeDialog(id) {
+      document.getElementById(id).style.display = "none";
+    }
+
+    function goHome() {
+      window.location.href = "home.html";
+    }
+
+    function copyAccountNumber() {
+      const accText = document.getElementById("successAcc").textContent.replace("Nomor Rekening: ", "").trim();
+      navigator.clipboard.writeText(accText).then(() => {
+        const notice = document.getElementById("copyNotice");
+        notice.style.display = "block";
+        setTimeout(() => (notice.style.display = "none"), 2000);
+      });
+    }
+  </script>
+</body>
+</html>

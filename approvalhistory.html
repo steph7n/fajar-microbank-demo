@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Riwayat Persetujuan - Fajar Microbank</title>
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+  <style>
+    :root{
+      --accent:#2ecc71;
+      --warn:#f39c12;
+      --bg:#fafafa;
+      --card:#ffffff;
+      --text:#333;
+      --sub:#777;
+      --border:#e0e0e0;
+      --deposit:#27ae60;
+      --withdraw:#e74c3c;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Roboto',sans-serif;background:var(--bg);color:var(--text)}
+
+    header{
+      background:#fff;border-bottom:4px solid var(--accent);
+      padding:14px 18px;display:flex;align-items:center;gap:8px;
+    }
+    header .material-icons{color:var(--accent);cursor:pointer}
+    header h1{margin:0;font-size:1.1rem;}
+
+    main{max-width:960px;margin:22px auto;padding:0 16px 28px;}
+
+    /* FILTER AREA */
+    .toggle{
+      display:flex;gap:8px;background:#eee;border-radius:999px;
+      padding:4px;width:max-content;margin-bottom:14px;
+    }
+    .toggle button{
+      border:none;background:transparent;padding:10px 14px;border-radius:999px;
+      cursor:pointer;color:#555;font-weight:500;
+    }
+    .toggle button.active{background:var(--accent);color:#fff;}
+    .filter-block{margin-bottom:16px;}
+    .month-buttons{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+    .month-buttons button{
+      border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;
+      background:#fff;font-size:.9rem;
+    }
+    .month-buttons button:hover{background:#f3f3f3;}
+    .range-block{margin-top:10px;}
+    .btn.show{
+      background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 16px;
+      cursor:pointer;font-weight:600;margin-top:10px;
+    }
+
+    /* CARDS */
+    .list{display:grid;gap:12px;}
+    .card{
+      position:relative;background:var(--card);border:1px solid var(--border);border-radius:16px;
+      box-shadow:0 4px 10px rgba(0,0,0,.04);padding:14px;display:grid;grid-template-columns:72px 1fr;gap:12px;
+      overflow:hidden;
+    }
+    .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px;background:var(--deposit);}
+    .card.withdraw::before{background:var(--withdraw);}
+    .badge-corner{
+      position:absolute;right:10px;top:6px;font-weight:900;letter-spacing:.5px;
+      font-size:1.5rem;opacity:.6;pointer-events:none;user-select:none;color:var(--deposit);
+    }
+    .card.withdraw .badge-corner{color:var(--withdraw);}
+    .thumb{
+      width:72px;height:72px;border-radius:10px;object-fit:cover;border:1px solid var(--border);
+      cursor:pointer;background:#f3f3f3;
+    }
+    .title{font-weight:700;margin:0 0 4px 0;}
+    .meta{font-size:.92rem;color:var(--sub);margin:0 10px 8px 0;}
+    .detail{margin:6px 0;font-size:.96rem;display:flex;gap:8px;flex-wrap:wrap;}
+    .detail .key{font-weight:700;}
+    .detail .key::after{content:":";}
+    .mono{font-variant-numeric:tabular-nums;}
+    .actions{display:flex;gap:8px;margin-top:10px;}
+    .btn{
+      border:none;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600;color:#fff;
+      display:inline-flex;align-items:center;gap:6px;
+    }
+    .btn.view{background:var(--accent);}
+    .status.approved{color:var(--deposit);font-weight:700;}
+    .status.rejected{color:var(--withdraw);font-weight:700;}
+
+    /* DIALOG */
+    .overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.45);
+      display:none;justify-content:center;align-items:center;padding:16px;
+    }
+    .dialog{
+      background:#fff;width:100%;max-width:420px;border-radius:14px;padding:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    .dialog h2{margin:0 0 10px 0;font-size:1.1rem;}
+    .dialog p{margin:6px 0;color:#555;}
+    .img-modal .dialog{max-width:720px;padding:10px;}
+    .img-modal img{max-width:100%;height:auto;display:block;border-radius:10px;}
+    .close-btn{
+      background:#e0e0e0;color:#222;border:none;padding:8px 14px;border-radius:8px;
+      cursor:pointer;font-weight:500;margin-top:12px;
+    }
+
+    /* EMPTY */
+    .empty{
+      background:var(--card);border:1px solid var(--border);border-radius:14px;
+      padding:18px;text-align:center;color:#777;
+    }
+
+    @media(max-width:520px){
+      .card{grid-template-columns:1fr;}
+      .thumb{width:100%;height:160px;}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="material-icons" onclick="goHome()">arrow_back</span>
+    <h1>Riwayat Persetujuan</h1>
+  </header>
+
+  <main>
+    <div class="toggle">
+      <button id="tabMonth" class="active">Bulanan</button>
+      <button id="tabRange">Rentang Tanggal</button>
+      <button id="tabAll">Seluruh Riwayat</button>
+    </div>
+
+    <div class="filter-block" id="monthBlock">
+      <div class="month-buttons" id="monthButtons"></div>
+    </div>
+
+    <div class="filter-block" id="rangeBlock" style="display:none;">
+      <div class="range-block">
+        <input id="rangePicker" placeholder="Pilih rentang tanggal" />
+      </div>
+    </div>
+
+    <section id="list" class="list"></section>
+    <div id="empty" class="empty" style="display:none;">Tidak ada data riwayat persetujuan.</div>
+  </main>
+
+  <!-- Modal Detail -->
+  <div id="detailModal" class="overlay">
+    <div class="dialog">
+      <h2>Detail Transaksi</h2>
+      <div id="detailContent"></div>
+      <button class="close-btn" onclick="closeDetail()">Tutup</button>
+    </div>
+  </div>
+
+  <script>
+    // Mock Data
+    const approvalHistory = [
+      {id:"H001",type:"Setoran",category:"Fungible",asset:"USD",amount:50.00,customer:"John Doe",acc:"11100045",status:"Disetujui",by:"Supervisor A",date:"30/10/2025 10:35",photo:"https://placehold.co/72x72?text=Foto"},
+      {id:"H002",type:"Setoran",category:"Fungible",asset:"Gold",amount:2.5,customer:"Agus Santoso",acc:"11100082",status:"Disetujui",by:"Supervisor A",date:"29/10/2025 11:00",photo:"https://placehold.co/72x72?text=Foto"},
+      {id:"H003",type:"Penarikan",category:"Fungible",asset:"IDR",amount:1000000,customer:"Jane Smith",acc:"11100067",status:"Disetujui",by:"Supervisor B",date:"29/10/2025 10:15",photo:"https://placehold.co/72x72?text=Foto"},
+      {id:"H004",type:"Setoran",category:"Valuables",desc:"Kalung emas 10 gr",customer:"Michael Tan",acc:"11100089",status:"Disetujui",by:"Supervisor C",date:"29/10/2025 09:45",photo:"https://placehold.co/72x72?text=Foto"},
+      {id:"H005",type:"Penarikan",category:"Valuables",desc:"Cincin berlian",customer:"Lisa Wong",acc:"11100092",status:"Ditolak",reason:"Deskripsi tidak jelas",by:"Supervisor D",date:"28/10/2025 14:20",photo:"https://placehold.co/72x72?text=Foto"},
+      {id:"H006",type:"Penarikan",category:"Fungible",asset:"EUR",amount:80.00,customer:"Rina Wijaya",acc:"11100105",status:"Ditolak",reason:"Saldo tidak mencukupi",by:"Supervisor D",date:"28/10/2025 09:10",photo:"https://placehold.co/72x72?text=Foto"}
+    ];
+
+    // Format helpers
+    const fmtIDR = n => "Rp " + Math.round(n).toLocaleString("id-ID");
+    const fmt2   = n => Number(n).toLocaleString("id-ID",{minimumFractionDigits:2,maximumFractionDigits:2});
+
+    function goHome(){ window.location.href="home.html"; }
+
+    // Month buttons
+    const monthNames=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+    const mBtns=document.getElementById("monthButtons");
+    const now=new Date();for(let i=0;i<12;i++){
+      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+      const btn=document.createElement("button");
+      btn.textContent=monthNames[d.getMonth()]+" "+d.getFullYear()+(i===0?" (berjalan)":"");
+      btn.onclick=()=>filterMonth(d.getMonth(),d.getFullYear());
+      mBtns.appendChild(btn);
+    }
+
+    // Tabs
+    const tabMonth=document.getElementById("tabMonth");
+    const tabRange=document.getElementById("tabRange");
+    const tabAll=document.getElementById("tabAll");
+    tabMonth.onclick=()=>{toggleTab("month");};
+    tabRange.onclick=()=>{toggleTab("range");};
+    tabAll.onclick=()=>{toggleTab("all");filterAll();};
+
+    function toggleTab(t){
+      tabMonth.classList.remove("active");
+      tabRange.classList.remove("active");
+      tabAll.classList.remove("active");
+      document.getElementById("monthBlock").style.display="none";
+      document.getElementById("rangeBlock").style.display="none";
+      if(t==="month"){tabMonth.classList.add("active");document.getElementById("monthBlock").style.display="block";}
+      else if(t==="range"){tabRange.classList.add("active");document.getElementById("rangeBlock").style.display="block";}
+      else{tabAll.classList.add("active");}
+    }
+
+    function filterMonth(m,y){
+      const filtered=approvalHistory.filter(x=>{
+        const d=new Date(x.date.split(" ")[0].split("/").reverse().join("-"));
+        return d.getMonth()===m && d.getFullYear()===y;
+      });
+      render(filtered);
+    }
+
+    function filterRange(){
+      // Deprecated: replaced by Flatpickr-based range picker
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      flatpickr("#rangePicker", {
+        mode: "range",
+        dateFormat: "j M Y",
+        locale: {
+          firstDayOfWeek: 1,
+          weekdays: {
+            shorthand: ['Min','Sen','Sel','Rab','Kam','Jum','Sab'],
+            longhand: ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],
+          },
+          months: {
+            shorthand: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+            longhand: ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],
+          }
+        },
+        maxDate: "today",
+        onClose: function(selectedDates) {
+          if (selectedDates.length === 2) {
+            const [start, end] = selectedDates;
+            filterRangeCustom(start, end);
+          }
+        }
+      });
+    });
+
+    function filterRangeCustom(start, end) {
+      const filtered = approvalHistory.filter(x => {
+        const d = new Date(x.date.split(" ")[0].split("/").reverse().join("-"));
+        return d >= start && d <= end;
+      });
+      render(filtered);
+    }
+
+    function filterAll(){ render(approvalHistory); }
+
+    function render(data){
+      const list=document.getElementById("list");
+      list.innerHTML="";
+      const sorted=[...data].sort((a,b)=>new Date(b.date.split(" ")[0].split("/").reverse().join("-"))-new Date(a.date.split(" ")[0].split("/").reverse().join("-")));
+      sorted.forEach(tx=>{
+        const card=document.createElement("div");
+        card.className="card"+(tx.type==="Penarikan"?" withdraw":"");
+        const badge=document.createElement("div");
+        badge.className="badge-corner";
+        badge.textContent=tx.type;
+        card.appendChild(badge);
+
+        const img=document.createElement("img");
+        img.className="thumb";img.src=tx.photo;
+        img.onerror=()=>{img.src="https://placehold.co/72x72?text=Foto";};
+        card.appendChild(img);
+
+        const body=document.createElement("div");
+        const title=document.createElement("div");title.className="title";
+        title.textContent=`${tx.customer} (${tx.acc})`;
+        const meta=document.createElement("div");meta.className="meta";meta.textContent=tx.date;
+        body.appendChild(title);body.appendChild(meta);
+
+        if(tx.category==="Fungible"){
+          body.appendChild(detailRow("Aset",tx.asset));
+          const amt=tx.asset==="IDR"?fmtIDR(tx.amount):(tx.asset+" "+fmt2(tx.amount));
+          body.appendChild(detailRow("Jumlah",amt,true));
+        }else{
+          body.appendChild(detailRow("Keterangan",tx.desc));
+        }
+
+        const status=document.createElement("div");
+        status.className="detail";
+        status.innerHTML=`<span class="key">Status</span> <span class="${tx.status==='Disetujui'?'status approved':'status rejected'}">${tx.status}</span>`;
+        body.appendChild(status);
+        body.appendChild(detailRow(tx.status==="Disetujui"?"Disetujui oleh":"Ditolak oleh",tx.by));
+
+        const actions=document.createElement("div");actions.className="actions";
+        const btnView=document.createElement("button");btnView.className="btn view";
+        btnView.innerHTML='<span class="material-icons">visibility</span>Lihat';
+        btnView.onclick=()=>openDetail(tx);
+        actions.appendChild(btnView);
+        body.appendChild(actions);
+
+        card.appendChild(body);
+        list.appendChild(card);
+      });
+      document.getElementById("empty").style.display=data.length?"none":"block";
+    }
+
+    function detailRow(k,v,mono=false){
+      const wrap=document.createElement("div");wrap.className="detail";
+      const key=document.createElement("span");key.className="key";key.textContent=k;
+      const val=document.createElement("span");val.className=mono?"mono":"";val.textContent=v;
+      wrap.appendChild(key);wrap.appendChild(val);
+      return wrap;
+    }
+
+    function openDetail(tx){
+      let html=`
+        <p><strong>Nasabah:</strong> ${tx.customer} (${tx.acc})</p>
+        <p><strong>Jenis:</strong> ${tx.type} ${tx.category==="Fungible"?(tx.asset||""):""}</p>
+        <p><strong>Status:</strong> <span class="${tx.status==='Disetujui'?'status approved':'status rejected'}">${tx.status}</span></p>
+        <p><strong>${tx.status==='Disetujui'?'Disetujui':'Ditolak'} oleh:</strong> ${tx.by}</p>
+        <p><strong>Tanggal:</strong> ${tx.date}</p>`;
+      if(tx.category==="Fungible"){
+        html+=`<p><strong>Jumlah:</strong> ${tx.asset==="IDR"?fmtIDR(tx.amount):(tx.asset+" "+fmt2(tx.amount))}</p>`;
+      }else{
+        html+=`<p><strong>Keterangan:</strong> ${tx.desc}</p>`;
+      }
+      if(tx.reason){html+=`<p><strong>Alasan Penolakan:</strong> ${tx.reason}</p>`;}
+      html+=`<p><strong>Bukti Transaksi:</strong></p><img src="${tx.photo}" alt="Bukti" style="width:100%;max-width:300px;border-radius:8px;">`;
+      document.getElementById("detailContent").innerHTML=html;
+      document.getElementById("detailModal").style.display="flex";
+    }
+    function closeDetail(){document.getElementById("detailModal").style.display="none";}
+
+    // Initial load (current month)
+    document.addEventListener("DOMContentLoaded",()=>filterAll());
+  </script>
+</body>
+</html>

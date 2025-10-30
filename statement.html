@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cetak Rekening Nasabah - Fajar Microbank</title>
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+  <!-- html2pdf -->
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
+
+  <style>
+    :root{
+      --accent:#2ecc71;
+      --accent-warn:#f39c12;
+      --row-alt:#f9f9f9;
+      --row-white:#ffffff;
+      --grid:#dcdcdc;
+      --pos:#27ae60;
+      --neg:#e74c3c;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family:'Roboto',sans-serif; background:#fafafa; margin:0;
+    }
+    header{
+      background:#fff; border-bottom:4px solid var(--accent);
+      padding:15px 20px; display:flex; align-items:center; gap:8px;
+    }
+    header .material-icons{ color:var(--accent); cursor:pointer }
+    header h1{ margin:0; font-size:1.1rem; color:#333 }
+
+    main{
+      max-width:960px; margin:24px auto; padding:0 16px 32px 16px;
+    }
+    .card{
+      background:#fff; border-radius:16px; box-shadow:0 4px 10px rgba(0,0,0,.05);
+      padding:20px; margin-bottom:16px;
+    }
+    label{ display:block; font-weight:500; color:#333; margin-bottom:6px }
+    input[type="text"]{
+      width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; font-size:1rem;
+    }
+    .row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap }
+    .actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:12px }
+    .btn{
+      border:none; border-radius:8px; padding:10px 14px; cursor:pointer; color:#fff;
+      background:var(--accent); transition:.2s; font-size:.95rem;
+    }
+    .btn.secondary{ background:#e0e0e0; color:#333 }
+    .btn.warn{ background:var(--accent-warn); }
+    .btn:disabled{ background:#bbb; cursor:not-allowed }
+    .hint{ color:#777; font-size:.9rem; margin-top:6px }
+    .error{ color:#e53935; font-size:.9rem; margin-top:6px }
+
+    /* Step containers */
+    .step{ display:none }
+    .step.active{ display:block }
+
+    /* 3-way toggle */
+    .toggle3{
+      display:flex; background:#eee; border-radius:999px; overflow:hidden; width:max-content;
+    }
+    .toggle3 button{
+      border:none; background:none; padding:10px 14px; cursor:pointer; color:#555;
+    }
+    .toggle3 button.active{ background:var(--accent); color:#fff }
+
+    /* Month grid */
+    .months{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-top:12px }
+    .month-btn{
+      border:1px solid #ddd; border-radius:8px; padding:10px; text-align:center; background:#fff; cursor:pointer;
+    }
+    .month-btn:hover{ border-color:var(--accent) }
+    .badge{ font-size:.8rem; color:#777 }
+
+    /* Customer summary chips */
+    .chips{ display:flex; gap:8px; flex-wrap:wrap }
+    .chip{
+      background:#fff; border:1px solid #e0e0e0; border-radius:999px; padding:6px 10px; font-size:.9rem;
+    }
+    #balanceChips {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* Inline banner */
+    .banner{
+      background:#fff3f3; border:1px solid #ffc8c8; color:#c62828; border-radius:8px; padding:10px; margin-top:10px;
+    }
+
+    /* Date-range single picker simulation */
+    .range-box{ margin-top:12px }
+    .range-display{ margin-top:8px; color:#333; font-weight:500 }
+    .range-help{ color:#777; font-size:.9rem }
+
+    /* PDF styling (injected into export container) */
+  </style>
+</head>
+<body>
+  <header>
+    <span class="material-icons" onclick="goHome()">arrow_back</span>
+    <h1>Cetak Rekening Nasabah</h1>
+  </header>
+
+  <main>
+    <!-- STEP 1: Account Number -->
+    <section id="step1" class="step active card">
+      <label for="accInput">Nomor Rekening (8 digit)</label>
+      <input id="accInput" type="text" placeholder="Contoh: 12300455" maxlength="8" />
+      <div class="actions">
+        <button id="next1" class="btn" disabled>Lanjut</button>
+      </div>
+      <div id="err1" class="error"></div>
+      <div id="ban1" class="banner" style="display:none;">Nomor HP salah. Silakan coba lagi.</div>
+    </section>
+
+    <!-- STEP 2: Phone Verification -->
+    <section id="step2" class="step card">
+      <div style="margin-bottom:8px; font-weight:500;">Masukkan Nomor HP Nasabah (tanpa spasi dan tanda baca)</div>
+      <div id="phoneHint" class="hint">Nomor HP: 08xxx0000</div>
+      <input id="phoneInput" type="text" placeholder="08xxxxxxxxx"/>
+      <div class="actions">
+        <button id="next2" class="btn">Lanjut</button>
+        <button class="btn secondary" onclick="backToStep(1)">Kembali</button>
+      </div>
+      <div id="err2" class="error"></div>
+    </section>
+
+    <!-- STEP 3: Statement Options -->
+    <section id="step3" class="step card">
+      <!-- Customer header -->
+      <div id="custHeader" style="margin-bottom:12px;">
+        <div style="font-weight:600; margin-bottom:4px" id="custName">Nama Nasabah: -</div>
+        <div class="hint" id="custAcc">Nomor Rekening: -</div>
+      </div>
+
+      <!-- Balances -->
+      <div class="chips" id="balanceChips"></div>
+
+      <!-- Mode switch -->
+      <div style="margin-top:16px">
+        <div class="toggle3" id="modeToggle">
+          <button data-mode="monthly" class="active">Bulanan</button>
+          <button data-mode="range">Rentang Tanggal</button>
+          <button data-mode="all">Seluruh Riwayat</button>
+        </div>
+      </div>
+
+      <!-- MONTHLY -->
+      <div id="monthlyBox" class="months"></div>
+
+      <!-- RANGE -->
+      <div id="rangeBox" class="range-box" style="display:none;">
+        <div class="range-help" id="rangeHelp">Pilih tanggal mulai</div>
+        <div class="range-display" id="rangeDisplay" style="display:none;"></div>
+        <div class="actions">
+          <button id="showRange" class="btn" disabled>Tampilkan</button>
+        </div>
+      </div>
+
+      <!-- ALL -->
+      <div id="allBox" style="display:none; margin-top:12px;">
+        <div class="actions">
+          <button id="showAll" class="btn">Tampilkan Seluruh Riwayat</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Hidden container for PDF building -->
+  <div id="pdfContainer" style="display:none;"></div>
+
+  <script>
+    // -----------------------------
+    // Mock Data (one customer demo)
+    // -----------------------------
+    const customers = [
+      {
+        acc: "11100045",
+        name: "John Doe",
+        phone: "087700017788", // exact compare (no sanitization)
+        balances: { IDR: 2500000, USD: 120.0, SGD: 80.0, EUR: 0.0, Gold: 10.5 },
+        transactions: [
+          { date: "2025-10-01", type: "deposit",    asset: "USD",  amount: 50,      desc:"Deposit USD 50.00",
+            balances: { IDR: 2500000, USD: 170.0, SGD: 80.0, EUR: 0.0, Gold: 10.5 } },
+          { date: "2025-10-05", type: "withdrawal", asset: "Gold", amount: 2.5,     desc:"Penarikan Emas 2.5 gr",
+            balances: { IDR: 2500000, USD: 170.0, SGD: 80.0, EUR: 0.0, Gold: 8.0 } },
+          { date: "2025-10-10", type: "deposit",    asset: "IDR",  amount: 1000000, desc:"Deposit IDR 1.000.000",
+            balances: { IDR: 3500000, USD: 170.0, SGD: 80.0, EUR: 0.0, Gold: 8.0 } },
+          { date: "2025-10-18", type: "deposit",    asset: "Gold", amount: 1.2,     desc:"Deposit Emas 1.2 gr",
+            balances: { IDR: 3500000, USD: 170.0, SGD: 80.0, EUR: 0.0, Gold: 9.2 } },
+          { date: "2025-10-22", type: "withdrawal", asset: "USD",  amount: 20,      desc:"Penarikan USD 20.00",
+            balances: { IDR: 3500000, USD: 150.0, SGD: 80.0, EUR: 0.0, Gold: 9.2 } }
+        ]
+      }
+    ];
+
+    // -----------------------------
+    // Utilities
+    // -----------------------------
+    const fmtIDR = (n)=> "Rp " + Math.round(n).toLocaleString("id-ID");
+    const fmt2   = (n)=> Number(n).toLocaleString("id-ID", {minimumFractionDigits:2, maximumFractionDigits:2});
+    const fmtGold= (n)=> Number(n).toLocaleString("id-ID") + " gr";
+
+    function amountLabel(tx){
+      const sign = tx.type === "deposit" ? "+" : "-";
+      if (tx.asset === "Gold" || tx.asset === "Emas")
+        return `${sign} Gold ${Number(tx.amount).toLocaleString("id-ID")} gr`;
+      if (tx.asset === "IDR")
+        return `${sign} ${fmtIDR(tx.amount)}`;
+      return `${sign} ${tx.asset} ${fmt2(tx.amount)}`;
+    }
+    function amountClass(tx){ return tx.type === "deposit" ? "pos" : "neg"; }
+
+    function monthNameId(date){
+      const fmt = new Intl.DateTimeFormat("id-ID",{month:"short", year:"numeric"});
+      return fmt.format(date); // e.g., "Okt 2025"
+    }
+
+    function toYMD(d){ return d.toISOString().slice(0,10); }
+    function parseYMD(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y, m-1, d); }
+
+    // -----------------------------
+    // Step logic
+    // -----------------------------
+    const step1 = document.getElementById("step1");
+    const step2 = document.getElementById("step2");
+    const step3 = document.getElementById("step3");
+    const accInput = document.getElementById("accInput");
+    const next1 = document.getElementById("next1");
+    const err1 = document.getElementById("err1");
+    const banner1 = document.getElementById("ban1");
+
+    const phoneHint = document.getElementById("phoneHint");
+    const phoneInput = document.getElementById("phoneInput");
+    const next2 = document.getElementById("next2");
+    const err2 = document.getElementById("err2");
+
+    const custHeaderName = document.getElementById("custName");
+    const custHeaderAcc = document.getElementById("custAcc");
+    const balanceChips = document.getElementById("balanceChips");
+
+    const modeToggle = document.getElementById("modeToggle");
+    const monthlyBox = document.getElementById("monthlyBox");
+    const rangeBox = document.getElementById("rangeBox");
+    const allBox = document.getElementById("allBox");
+
+    let currentCustomer = null;
+
+    // Step 1: Validate account input (8 digits & exists)
+    accInput.addEventListener("input", ()=>{
+      err1.textContent = "";
+      banner1.style.display = "none";
+      const v = accInput.value.trim();
+      const ok = /^\d{8}$/.test(v);
+      next1.disabled = !ok;
+    });
+
+    next1.addEventListener("click", ()=>{
+      const v = accInput.value.trim();
+      currentCustomer = customers.find(c => c.acc === v);
+      if(!currentCustomer){
+        err1.textContent = "Nomor rekening tidak ditemukan.";
+        return;
+      }
+      // setup phone hint: "08xxxNNNN"
+      const last4 = currentCustomer.phone.slice(-4);
+      phoneHint.textContent = `Nomor HP: 08xxx${last4}`;
+      phoneInput.value = "";
+      err2.textContent = "";
+
+      showStep(2);
+    });
+
+    // Step 2: Phone check (exact match, no sanitization)
+    next2.addEventListener("click", ()=>{
+      const typed = phoneInput.value.trim();
+      if(typed === currentCustomer.phone){
+        // Prepare step 3 summary and UI
+        renderCustomerSummary(currentCustomer);
+        setupMonthlyButtons();
+        resetRangePicker();
+        showStep(3);
+      } else {
+        // back to step 1 with error banner
+        showStep(1);
+        banner1.style.display = "block";
+        accInput.value = "";
+        next1.disabled = true;
+      }
+    });
+
+    function showStep(n){
+      [step1, step2, step3].forEach(s => s.classList.remove("active"));
+      (n===1?step1:n===2?step2:step3).classList.add("active");
+    }
+
+    function renderCustomerSummary(c){
+      // Customer name, big and bold
+      custHeaderName.textContent = c.name;
+      custHeaderName.style.fontSize = "1.4rem";
+      custHeaderName.style.fontWeight = "700";
+      custHeaderName.style.marginBottom = "4px";
+      // Account number, moderately larger, gray
+      custHeaderAcc.textContent = `No. Rekening: ${c.acc}`;
+      custHeaderAcc.style.fontSize = "1.1rem";
+      custHeaderAcc.style.color = "#888";
+      custHeaderAcc.style.marginBottom = "6px";
+      // Balances: each on its own line under the account number
+      balanceChips.innerHTML = "";
+      const lines = [
+        `Saldo IDR: ${fmtIDR(c.balances.IDR)}`,
+        `Saldo USD: ${fmt2(c.balances.USD)}`,
+        `Saldo SGD: ${fmt2(c.balances.SGD)}`,
+        `Saldo EUR: ${fmt2(c.balances.EUR)}`,
+        `Saldo Emas: ${fmtGold(c.balances.Gold)}`
+      ];
+      lines.forEach(txt => {
+        const div = document.createElement("div");
+        div.textContent = txt;
+        div.style.fontSize = "1rem";
+        div.style.marginBottom = "6px";
+        div.style.fontWeight = "400";
+        div.style.display = "block";
+        balanceChips.appendChild(div);
+      });
+    }
+
+    function backToStep(n){ showStep(n); }
+
+    // -----------------------------
+    // Mode toggle
+    // -----------------------------
+    modeToggle.querySelectorAll("button").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        modeToggle.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        const mode = btn.dataset.mode;
+        monthlyBox.style.display = (mode==="monthly")? "grid":"none";
+        rangeBox.style.display   = (mode==="range")?   "block":"none";
+        allBox.style.display     = (mode==="all")?     "block":"none";
+      });
+    });
+
+    // -----------------------------
+    // Monthly buttons (last 12 months)
+    // -----------------------------
+    function setupMonthlyButtons(){
+      monthlyBox.innerHTML="";
+      const now = new Date();
+      for(let i=0;i<12;i++){
+        const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+        const label = monthNameId(d);
+        const btn = document.createElement("div");
+        btn.className="month-btn";
+        btn.innerHTML = `${label} ${i===0?'<span class="badge">(berjalan)</span>':''}`;
+        btn.addEventListener("click", ()=>{
+          // Compute start/end of that month
+          const start = new Date(d.getFullYear(), d.getMonth(), 1);
+          const end   = new Date(d.getFullYear(), d.getMonth()+1, 0);
+          generateAndDownloadPDF(currentCustomer, start, end, `${label.replace(" ","")}`);
+        });
+        monthlyBox.appendChild(btn);
+      }
+    }
+
+    // -----------------------------
+    // Flatpickr Date Range Picker
+    // -----------------------------
+    const rangeBoxEl = document.getElementById("rangeBox");
+    const rangeHelp = document.getElementById("rangeHelp");
+    const rangeDisplay = document.getElementById("rangeDisplay");
+    const showRangeBtn = document.getElementById("showRange");
+
+    // Create input dynamically (to keep style consistent)
+    const rangeInput = document.createElement("input");
+    rangeInput.id = "flatpickrRange";
+    rangeInput.placeholder = "Pilih rentang tanggal";
+    rangeInput.style = "width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; font-size:1rem;";
+    rangeBoxEl.insertBefore(rangeInput, rangeHelp.nextSibling);
+
+    function resetRangePicker() {
+      if (rangeInput._flatpickr) {
+        rangeInput._flatpickr.clear();
+      }
+      rangeDisplay.style.display = "none";
+      rangeDisplay.textContent = "";
+      showRangeBtn.disabled = true;
+    }
+
+document.addEventListener("DOMContentLoaded", () => {
+  flatpickr("#flatpickrRange", {
+    locale: {
+      firstDayOfWeek: 1,
+      weekdays: {
+        shorthand: ['Min','Sen','Sel','Rab','Kam','Jum','Sab'],
+        longhand: ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],
+      },
+      months: {
+        shorthand: ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'],
+        longhand: ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],
+      }
+    },
+    mode: "range",
+    dateFormat: "j M Y",
+    allowInput: true,
+    maxDate: "today",
+    onChange: function(selectedDates, dateStr, instance) {
+      if (selectedDates.length === 2) {
+        const diffDays = (selectedDates[1] - selectedDates[0]) / (1000 * 60 * 60 * 24);
+        if (diffDays > 30) {
+          alert("Rentang tanggal maksimal 30 hari!");
+          instance.clear();
+          rangeDisplay.style.display = "none";
+          showRangeBtn.disabled = true;
+        } else {
+          rangeDisplay.textContent = dateStr;
+          rangeDisplay.style.display = "block";
+          showRangeBtn.disabled = false;
+        }
+      } else {
+        showRangeBtn.disabled = true;
+      }
+    }
+  });
+});
+
+    showRangeBtn.addEventListener("click", () => {
+      const picker = document.querySelector("#flatpickrRange")._flatpickr;
+      const selected = picker.selectedDates;
+      if (selected.length === 2) {
+        const [start, end] = selected;
+        generateAndDownloadPDF(currentCustomer, start, end, `${formatRangeFile(start, end)}`);
+      }
+    });
+
+    function formatRangeFile(s, e) {
+      const pad = v => String(v).padStart(2, "0");
+      return `${s.getFullYear()}${pad(s.getMonth() + 1)}${pad(s.getDate())}-${e.getFullYear()}${pad(e.getMonth() + 1)}${pad(e.getDate())}`;
+    }
+
+    function formatRangeId(s, e){
+      const fmt = new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "2-digit", year: "numeric" });
+      return `${fmt.format(s)} - ${fmt.format(e)}`;
+    }
+
+    // -----------------------------
+    // Full history
+    // -----------------------------
+    document.getElementById("showAll").addEventListener("click", ()=>{
+      // detect min/max in dataset
+      const dates = currentCustomer.transactions.map(t=>parseYMD(t.date));
+      const minD = new Date(Math.min.apply(null, dates));
+      const maxD = new Date(Math.max.apply(null, dates));
+      generateAndDownloadPDF(currentCustomer, minD, maxD, "SeluruhRiwayat");
+    });
+
+    // -----------------------------
+    // PDF generation
+    // -----------------------------
+    function filterTxInRange(c, start, end){
+      const s = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      const e = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23,59,59,999);
+      return c.transactions.filter(tx=>{
+        const d = parseYMD(tx.date);
+        return d>=s && d<=e;
+      }).sort((a,b)=>a.date.localeCompare(b.date));
+    }
+
+    function generateAndDownloadPDF(cust, start, end, suffix){
+      const list = filterTxInRange(cust, start, end);
+      const periodId = formatRangeId(start, end);
+
+      // Color constants from :root
+      const rowWhite = "#ffffff";
+      const rowAlt = "#f9f9f9";
+      const grid = "#dcdcdc";
+      const pos = "#27ae60";
+      const neg = "#e74c3c";
+
+      // Build HTML for PDF
+      const wrap = document.getElementById("pdfContainer");
+      wrap.innerHTML = `
+        <div id="pdfRoot" style="font-family:Roboto,Arial,sans-serif; color:#222; padding:20px; max-width:1000px;">
+          <div style="text-align:center; margin-bottom:12px; font-size:18px; font-weight:700;">Toko Mas Fajar - Rekening Nasabah</div>
+          <div style="margin-bottom:6px;"><strong>Nama Nasabah:</strong> ${cust.name}</div>
+          <div style="margin-bottom:6px;"><strong>Nomor Rekening:</strong> ${cust.acc}</div>
+          <div style="margin-bottom:12px;"><strong>Periode:</strong> ${periodId}</div>
+
+          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead>
+              <tr style="background:#eaeaea;">
+                ${th("Tanggal Transaksi")}
+                ${th("Deskripsi")}
+                ${th("Jumlah","right")}
+                ${th("Saldo IDR","right")}
+                ${th("Saldo USD","right")}
+                ${th("Saldo SGD","right")}
+                ${th("Saldo EUR","right")}
+                ${th("Saldo Emas","right")}
+              </tr>
+            </thead>
+            <tbody>
+              ${list.map((tx,idx)=>{
+                const rowBg = idx%2===0? `background:${rowWhite}` : `background:${rowAlt}`;
+                const amtClass = tx.type==="deposit"?"pos":"neg";
+                return `
+                  <tr style="${rowBg}">
+                    ${td(dateId(tx.date))}
+                    ${td(descText(tx))}
+                    ${td(`<span class="${amtClass}">${escapeHTML(amountLabel(tx))}</span>`,"right")}
+                    ${td(fmtIDR(tx.balances.IDR),"right")}
+                    ${td(fmt2(tx.balances.USD),"right")}
+                    ${td(fmt2(tx.balances.SGD),"right")}
+                    ${td(fmt2(tx.balances.EUR),"right")}
+                    ${td(fmtGold(tx.balances.Gold),"right")}
+                  </tr>`;
+              }).join("")}
+            </tbody>
+          </table>
+
+          <div style="margin-top:12px; font-size:11px; color:#555;">
+            Diterbitkan oleh Fajar Microbank System — ${new Date().toLocaleString("id-ID")}
+          </div>
+        </div>
+        <style>
+          #pdfRoot th, #pdfRoot td { border:1px solid ${grid}; padding:6px; }
+          #pdfRoot td.right, #pdfRoot th.right { text-align:right; }
+          #pdfRoot td.left,  #pdfRoot th.left  { text-align:left;  }
+          #pdfRoot .pos{ color:${pos}; font-weight:600; }
+          #pdfRoot .neg{ color:${neg}; font-weight:600; }
+        </style>
+      `;
+
+      const opt = {
+        margin:       10,
+        filename:     `Rekening_${cust.acc}_${suffix}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      // Check for empty data before rendering PDF
+      if (list.length === 0) {
+        alert("Tidak ada transaksi pada rentang tanggal yang dipilih.");
+        return;
+      }
+
+      // Delay to ensure DOM fully rendered before exporting
+      setTimeout(() => {
+        const pdfRoot = wrap.querySelector('#pdfRoot');
+        if (pdfRoot) {
+          html2pdf().from(pdfRoot).set(opt).save();
+        } else {
+          alert("Terjadi kesalahan saat membuat PDF. Silakan coba lagi.");
+        }
+      }, 100);
+    }
+
+    function th(text, align="left"){
+      return `<th class="${align}">${escapeHTML(text)}</th>`;
+    }
+    function td(html, align="left"){
+      return `<td class="${align}">${html}</td>`;
+    }
+    function descText(tx){
+      if(tx.asset==="Gold" || tx.asset==="Emas"){
+        // valuables-style description
+        return escapeHTML(tx.desc || (tx.type==="deposit" ? `Deposit Emas ${fmtGold(tx.amount)}` : `Penarikan Emas ${fmtGold(tx.amount)}`));
+      }
+      // fungible
+      const amt = (tx.asset==="IDR") ? fmtIDR(tx.amount) : `${tx.asset} ${fmt2(tx.amount)}`;
+      return escapeHTML(tx.desc || (tx.type==="deposit" ? `Deposit ${amt}` : `Penarikan ${amt}`));
+    }
+    function dateId(ymd){
+      const d = parseYMD(ymd);
+      return new Intl.DateTimeFormat("id-ID",{day:"2-digit",month:"2-digit",year:"numeric"}).format(d);
+    }
+    function escapeHTML(s){
+      return String(s).replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+    }
+
+    // -----------------------------
+    // Nav + setup
+    // -----------------------------
+    function goHome(){ window.location.href="home.html"; }
+
+    // init
+    document.addEventListener("DOMContentLoaded", ()=>{
+      // default mode = monthly visible
+      monthlyBox.style.display="grid";
+      rangeBox.style.display="none";
+      allBox.style.display="none";
+    });
+  </script>
+</body>
+</html>

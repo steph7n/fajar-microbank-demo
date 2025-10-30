@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pengaturan Sistem - Fajar Microbank</title>
+
+  <!-- Cloud fonts/icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --accent:#2ecc71;
+      --warn:#f39c12;
+      --danger:#e74c3c;
+      --bg:#fafafa;
+      --card:#ffffff;
+      --text:#333;
+      --sub:#777;
+      --border:#e0e0e0;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Roboto',sans-serif;background:var(--bg);color:var(--text)}
+
+    header{
+      background:#fff;border-bottom:4px solid var(--accent);
+      padding:14px 18px;display:flex;align-items:center;gap:8px;
+    }
+    header .material-icons{color:var(--accent);cursor:pointer}
+    header h1{margin:0;font-size:1.1rem;}
+
+    main{max-width:960px;margin:22px auto 90px; padding:0 16px 28px;}
+
+    .card{
+      background:var(--card);border:1px solid var(--border);border-radius:16px;
+      box-shadow:0 4px 10px rgba(0,0,0,.04);padding:16px 16px 12px;margin-bottom:14px;
+    }
+    .card h2{
+      margin:0 0 12px 0;font-size:1.05rem;display:flex;align-items:center;gap:8px;
+      border-left:4px solid var(--accent);padding-left:10px;
+    }
+
+    label{display:block;margin:10px 0 6px;font-weight:600}
+    .row{display:grid;grid-template-columns:1fr 200px;gap:10px}
+    .row .field{display:flex;gap:8px;align-items:center}
+    .hint{font-size:.9rem;color:var(--sub)}
+    .error{color:var(--danger);font-size:.9rem;margin-top:6px}
+
+    input[type="text"], input[type="number"], select{
+      width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:1rem;background:#fff;
+    }
+    input[readonly]{background:#f4f4f4;color:#666}
+
+    .btn{
+      border:none;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600;
+      display:inline-flex;align-items:center;gap:8px;
+      background:var(--accent);color:#fff;
+    }
+    .btn.secondary{background:#e0e0e0;color:#222}
+    .btn.warn{background:var(--warn);color:#222}
+    .btn.danger{background:var(--danger);}
+
+    /* Toggle pill */
+    .toggle{
+      background:#eee;border-radius:999px;display:inline-flex;overflow:hidden;
+    }
+    .toggle button{
+      border:none;background:transparent;padding:8px 14px;cursor:pointer;color:#555;font-weight:500;
+    }
+    .toggle button.active{background:var(--accent);color:#fff}
+
+    /* Bottom bar */
+    .bottom-bar{
+      position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--border);
+      padding:10px 16px;display:flex;justify-content:center;gap:10px;
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;left:50%;bottom:76px;transform:translateX(-50%);
+      background:#323232;color:#fff;border-radius:999px;padding:10px 14px;font-size:.95rem;
+      opacity:0;pointer-events:none;transition:opacity .2s ease;
+    }
+    .toast.show{opacity:1}
+
+    /* Modal */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;justify-content:center;align-items:center;padding:16px}
+    .dialog{background:#fff;width:100%;max-width:420px;border-radius:14px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .dialog h3{margin:0 0 8px 0}
+    .dialog p{margin:6px 0;color:#555}
+    .dialog .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+  </style>
+</head>
+<body>
+  <header>
+    <span class="material-icons" onclick="goHome()">arrow_back</span>
+    <h1>Pengaturan Sistem</h1>
+  </header>
+
+  <main>
+    <!-- A. FOLDER & FILE DRIVE -->
+    <section class="card" id="cardDrive">
+      <h2><span class="material-icons">folder</span> Folder & File Drive</h2>
+
+      <label for="fldProof">Folder Bukti Transaksi (Drive Folder ID)</label>
+      <div class="row">
+        <div class="field">
+          <input id="fldProof" type="text" placeholder="mis. 1AbCdEfGhIjKlMnOp..." />
+        </div>
+        <div class="field" style="justify-content:flex-end">
+          <button class="btn secondary" onclick="testFolder('fldProof')"><span class="material-icons">check_circle</span>Uji Folder</button>
+        </div>
+      </div>
+      <div class="hint">Tempat penyimpanan foto bukti transaksi (tunai/emas).</div>
+      <div id="errProof" class="error" style="display:none"></div>
+
+      <label for="fldValPhotos" style="margin-top:14px">Folder Foto Barang Berharga (Drive Folder ID)</label>
+      <div class="row">
+        <div class="field">
+          <input id="fldValPhotos" type="text" placeholder="mis. 1XyZ98765abc..." />
+        </div>
+        <div class="field" style="justify-content:flex-end">
+          <button class="btn secondary" onclick="testFolder('fldValPhotos')"><span class="material-icons">check_circle</span>Uji Folder</button>
+        </div>
+      </div>
+      <div class="hint">Tempat penyimpanan foto barang berharga (deposit/penarikan).</div>
+      <div id="errVal" class="error" style="display:none"></div>
+
+      <label for="fldBackup" style="margin-top:14px">Folder Backup Data (Opsional)</label>
+      <div class="row">
+        <div class="field">
+          <input id="fldBackup" type="text" placeholder="(opsional)" />
+        </div>
+        <div class="field" style="justify-content:flex-end">
+          <button class="btn secondary" onclick="testFolder('fldBackup')"><span class="material-icons">check_circle</span>Uji Folder</button>
+        </div>
+      </div>
+      <div class="hint">Jika diisi, sistem dapat melakukan backup berkala (fitur lanjutan).</div>
+    </section>
+
+    <!-- B. KEBIJAKAN SISTEM -->
+    <section class="card" id="cardPolicy">
+      <h2><span class="material-icons">tune</span> Kebijakan Sistem</h2>
+
+      <label>Wajib Foto Bukti Transaksi</label>
+      <div class="toggle" data-toggle="reqProof">
+        <button data-v="off" class="active">Nonaktif</button>
+        <button data-v="on">Aktif</button>
+      </div>
+      <div class="hint">Jika aktif, staf harus mengunggah foto bukti sebelum kirim transaksi.</div>
+
+      <div id="allowNoProofWrap" style="margin-top:12px;display:none">
+        <label>Izinkan Penarikan tanpa Bukti</label>
+        <div class="toggle" data-toggle="allowNoProof">
+          <button data-v="off" class="active">Nonaktif</button>
+          <button data-v="on">Aktif</button>
+        </div>
+        <div class="hint">Hanya berlaku jika “Wajib Foto Bukti Transaksi” diaktifkan.</div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label>Tampilkan Nomor Rekening di PDF</label>
+        <div class="toggle" data-toggle="showAccOnPdf">
+          <button data-v="off">Sembunyikan</button>
+          <button data-v="on" class="active">Tampilkan</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- C. PRIVILEGE & APPROVAL -->
+    <section class="card" id="cardApproval">
+      <h2><span class="material-icons">verified_user</span> Privilege & Persetujuan</h2>
+
+      <label for="autoApproveUnder">Otomatis Setujui Transaksi di Bawah (IDR)</label>
+      <div class="row">
+        <div class="field">
+          <input id="autoApproveUnder" type="number" min="0" step="50000" placeholder="0 = nonaktif" />
+        </div>
+        <div class="field"></div>
+      </div>
+      <div class="hint">Transaksi di bawah nilai ini akan langsung disetujui. Gunakan 0 untuk menonaktifkan.</div>
+
+      <label for="minSuperv" style="margin-top:14px">Jumlah Supervisor Minimum untuk Persetujuan</label>
+      <div class="row">
+        <div class="field">
+          <select id="minSuperv">
+            <option value="1">1 Supervisor</option>
+            <option value="2">2 Supervisor</option>
+            <option value="3">3 Supervisor</option>
+          </select>
+        </div>
+        <div class="field"></div>
+      </div>
+      <div class="hint">Menentukan berapa banyak supervisor yang harus menyetujui transaksi.</div>
+    </section>
+
+    <!-- D. SISTEM & DATA -->
+    <section class="card" id="cardSystem">
+      <h2><span class="material-icons">settings</span> Sistem & Data</h2>
+
+      <label for="sysVersion">Versi Sistem</label>
+      <div class="row">
+        <div class="field">
+          <input id="sysVersion" type="text" value="v3.0 (Mock)" readonly />
+        </div>
+        <div class="field"></div>
+      </div>
+
+      <div class="row" style="margin-top:6px">
+        <div class="field">
+          <button class="btn warn" onclick="exportCsv()"><span class="material-icons">download</span>Export Semua Data (CSV)</button>
+        </div>
+        <div class="field" style="justify-content:flex-end">
+          <button class="btn danger" onclick="openResetModal()"><span class="material-icons">restart_alt</span>Reset ke Default</button>
+        </div>
+      </div>
+      <div class="hint">Fitur export & reset akan terhubung ke Apps Script pada tahap backend.</div>
+    </section>
+  </main>
+
+  <!-- Bottom save bar -->
+  <div class="bottom-bar">
+    <button class="btn secondary" onclick="discardChanges()"><span class="material-icons">close</span>Batalkan</button>
+    <button class="btn" id="btnSave" onclick="saveSettings()"><span class="material-icons">save</span>Simpan Pengaturan</button>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">Tersimpan</div>
+
+  <!-- Modals -->
+  <div id="leaveModal" class="overlay">
+    <div class="dialog">
+      <h3>Perubahan belum disimpan</h3>
+      <p>Anda yakin ingin meninggalkan halaman ini?</p>
+      <div class="actions">
+        <button class="btn secondary" onclick="closeLeave()">Batal</button>
+        <button class="btn danger" onclick="confirmLeave()">Tinggalkan</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="resetModal" class="overlay">
+    <div class="dialog">
+      <h3>Reset Pengaturan</h3>
+      <p>Tindakan ini akan mengembalikan semua pengaturan ke default.</p>
+      <div class="actions">
+        <button class="btn secondary" onclick="closeResetModal()">Batal</button>
+        <button class="btn danger" onclick="doReset()">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Navigation ----------
+    function goHome(){
+      if(isDirty) { openLeave(); } else { window.location.href="home.html"; }
+    }
+
+    // ---------- State ----------
+    let isDirty = false;
+    const toast = document.getElementById("toast");
+    const toggleValues = {
+      reqProof: "off",
+      allowNoProof: "off",
+      showAccOnPdf: "on"
+    };
+
+    // Mark dirty on any input change
+    document.addEventListener("input", ()=> isDirty = true);
+    document.addEventListener("change", ()=> isDirty = true);
+
+    // Toggle logic
+    document.querySelectorAll('.toggle').forEach(tg=>{
+      tg.addEventListener('click', (e)=>{
+        if(e.target.tagName !== 'BUTTON') return;
+        tg.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+        e.target.classList.add('active');
+        const key = tg.dataset.toggle;
+        if(key){ toggleValues[key] = e.target.dataset.v; }
+        // Show/hide dependent section
+        if(key === 'reqProof'){
+          document.getElementById('allowNoProofWrap').style.display =
+            (toggleValues.reqProof === 'on') ? 'block' : 'none';
+        }
+        isDirty = true;
+      });
+    });
+
+    // ---------- Drive Folder "test" (mock) ----------
+    function testFolder(inputId){
+      const val = document.getElementById(inputId).value.trim();
+      const errEl = inputId === 'fldProof' ? document.getElementById('errProof')
+                  : inputId === 'fldValPhotos' ? document.getElementById('errVal')
+                  : null;
+      if(errEl){ errEl.style.display = 'none'; }
+      // simple mock rule: valid if 10+ chars
+      if(val.length < 10){
+        if(errEl){
+          errEl.textContent = "Folder ID tampak tidak valid. Harap periksa kembali.";
+          errEl.style.display = 'block';
+        } else {
+          showToast("Folder ID tampak tidak valid.");
+        }
+      }else{
+        showToast("Folder ditemukan & dapat diakses (simulasi).");
+      }
+    }
+
+    // ---------- Save / Discard ----------
+    function saveSettings(){
+      // In real app: google.script.run.saveSettings(payload)
+      const payload = {
+        proofFolder: document.getElementById('fldProof').value.trim(),
+        valuableFolder: document.getElementById('fldValPhotos').value.trim(),
+        backupFolder: document.getElementById('fldBackup').value.trim(),
+        policies: {...toggleValues},
+        autoApproveUnder: Number(document.getElementById('autoApproveUnder').value || 0),
+        minSupervisor: Number(document.getElementById('minSuperv').value),
+      };
+      console.log("Saving settings (mock):", payload);
+      isDirty = false;
+      showToast("Pengaturan berhasil disimpan.");
+    }
+    function discardChanges(){
+      if(isDirty){ openLeave(); }
+      else { showToast("Tidak ada perubahan."); }
+    }
+
+    // ---------- Toast ----------
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(()=>toast.classList.remove('show'), 1800);
+    }
+
+    // ---------- Leave modal ----------
+    function openLeave(){ document.getElementById('leaveModal').style.display='flex'; }
+    function closeLeave(){ document.getElementById('leaveModal').style.display='none'; }
+    function confirmLeave(){ isDirty=false; window.location.href="home.html"; }
+
+    // ---------- Reset modal ----------
+    function openResetModal(){ document.getElementById('resetModal').style.display='flex'; }
+    function closeResetModal(){ document.getElementById('resetModal').style.display='none'; }
+    function doReset(){
+      // reset fields to defaults (mock)
+      document.getElementById('fldProof').value = "";
+      document.getElementById('fldValPhotos').value = "";
+      document.getElementById('fldBackup').value = "";
+      document.getElementById('autoApproveUnder').value = "";
+      document.getElementById('minSuperv').value = "1";
+      // toggles
+      setToggle('reqProof','off');
+      setToggle('allowNoProof','off');
+      setToggle('showAccOnPdf','on');
+      document.getElementById('allowNoProofWrap').style.display = 'none';
+      isDirty = true;
+      closeResetModal();
+      showToast("Pengaturan telah direset (belum disimpan).");
+    }
+    function setToggle(key,val){
+      const tg = document.querySelector(`.toggle[data-toggle="${key}"]`);
+      if(!tg) return;
+      tg.querySelectorAll('button').forEach(b=>{
+        b.classList.toggle('active', b.dataset.v === val);
+      });
+      toggleValues[key] = val;
+    }
+
+    // ---------- Mock: Export CSV ----------
+    function exportCsv(){
+      showToast("Export CSV (simulasi).");
+      // Real impl: build CSV from Sheets and trigger download
+    }
+
+    // Warn if user tries to close tab with unsaved changes
+    window.addEventListener("beforeunload", (e)=>{
+      if(!isDirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    });
+
+    // Prefill with mock values (so it feels alive)
+    document.addEventListener("DOMContentLoaded", ()=>{
+      document.getElementById('fldProof').value = "1AbCdEfGhIjKlMnOpQrSt";
+      document.getElementById('fldValPhotos').value = "1XyZ98765abcDeFgHiJk";
+      document.getElementById('fldBackup').value = "";
+      document.getElementById('autoApproveUnder').value = "0";
+      document.getElementById('minSuperv').value = "1";
+      setToggle('reqProof','off');
+      setToggle('allowNoProof','off');
+      setToggle('showAccOnPdf','on');
+      document.getElementById('allowNoProofWrap').style.display = 'none';
+      isDirty = false; // starting state
+    });
+  </script>
+</body>
+</html>

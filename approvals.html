@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Persetujuan Transaksi - Fajar Microbank</title>
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+
+  <style>
+    :root{
+      --accent:#2ecc71;      /* brand green */
+      --warn:#f39c12;        /* reject button */
+      --bg:#fafafa;
+      --card:#ffffff;
+      --text:#333;
+      --sub:#777;
+      --border:#e0e0e0;
+      --deposit:#27ae60;     /* green for Setoran */
+      --withdraw:#e74c3c;    /* red for Penarikan */
+    }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family:'Roboto',sans-serif; background:var(--bg); color:var(--text); }
+
+    header{
+      background:#fff; border-bottom:4px solid var(--accent);
+      padding:14px 18px; display:flex; align-items:center; gap:8px;
+    }
+    header .material-icons{ color:var(--accent); cursor:pointer }
+    header h1{ margin:0; font-size:1.1rem; }
+
+    main{ max-width:960px; margin:22px auto; padding:0 16px 28px; }
+
+    .toggle{
+      display:flex; gap:8px; background:#eee; border-radius:999px;
+      padding:4px; width:max-content; margin-bottom:14px;
+    }
+    .toggle button{
+      border:none; background:transparent; padding:10px 14px; border-radius:999px;
+      cursor:pointer; color:#555; font-weight:500;
+    }
+    .toggle button.active{ background:var(--accent); color:#fff; }
+
+    .list{ display:grid; gap:12px; }
+
+    .card{
+      position:relative;
+      background:var(--card); border:1px solid var(--border); border-radius:16px;
+      box-shadow:0 4px 10px rgba(0,0,0,.04); padding:14px 14px 16px 14px;
+      display:grid; grid-template-columns:72px 1fr; gap:12px; align-items:start;
+      overflow:hidden;
+    }
+    /* thick left border via pseudo, color per type */
+    .card::before{
+      content:""; position:absolute; left:0; top:0; bottom:0; width:8px; background:var(--deposit);
+    }
+    .card.withdraw::before{ background:var(--withdraw); }
+
+    /* big label top-right */
+    .badge-corner{
+      position:absolute; right:10px; top:6px; font-weight:900; letter-spacing:.5px;
+      font-size:1.5rem; opacity:.60; pointer-events:none; user-select:none;
+      color:var(--deposit);
+    }
+    .card.withdraw .badge-corner{ color:var(--withdraw); }
+
+    .thumb{
+      width:72px; height:72px; border-radius:10px; object-fit:cover; border:1px solid var(--border);
+      cursor:pointer; background:#f3f3f3;
+    }
+
+    .title{ font-weight:700; margin:0 0 4px 0; }
+    .meta{ font-size:.92rem; color:var(--sub); margin:0 10px 8px 0; }
+
+    .detail{ margin:6px 0; font-size:.96rem; display:flex; gap:8px; flex-wrap:wrap }
+    .detail .key{ font-weight:700 }
+    .detail .key::after{ content:":"; }
+    .mono{ font-variant-numeric: tabular-nums; }
+
+    .actions{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap }
+    .btn{
+      border:none; border-radius:10px; padding:10px 14px; cursor:pointer; font-weight:600; color:#fff;
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .btn.approve{ background:var(--deposit); }
+    .btn.reject{ background:var(--warn); color:#212121; }
+
+    /* Dialogs */
+    .overlay{
+      position:fixed; inset:0; background:rgba(0,0,0,.45);
+      display:none; justify-content:center; align-items:center; padding:16px;
+    }
+    .dialog{
+      background:#fff; width:100%; max-width:420px; border-radius:14px; padding:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    .dialog h2{ margin:0 0 10px 0; font-size:1.1rem; }
+    .dialog p{ margin:6px 0; color:#555 }
+    .dialog .field{ margin-top:8px }
+    .dialog input[type="text"]{
+      width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; font-size:1rem;
+    }
+    .dialog .dlg-actions{ margin-top:14px; display:flex; gap:8px; justify-content:flex-end }
+    .btn.outline{ background:#e0e0e0; color:#222 }
+
+    /* Image modal */
+    .img-modal .dialog{ max-width:720px; padding:10px; }
+    .img-modal img{ max-width:100%; height:auto; display:block; border-radius:10px; }
+
+    /* Toast */
+    .toast{
+      position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+      background:#323232; color:#fff; padding:10px 14px; border-radius:999px; font-size:.95rem;
+      opacity:0; pointer-events:none; transition:opacity .2s ease;
+    }
+    .toast.show{ opacity:1; }
+
+    /* Empty state */
+    .empty{
+      background:var(--card); border:1px solid var(--border); border-radius:14px;
+      padding:18px; text-align:center; color:#777;
+    }
+
+    @media (max-width:520px){
+      .card{ grid-template-columns:1fr; }
+      .thumb{ width:100%; height:160px; }
+      .badge-corner{ font-size:1.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="material-icons" onclick="goHome()">arrow_back</span>
+    <h1>Persetujuan Transaksi</h1>
+  </header>
+
+  <main>
+    <div class="toggle">
+      <button id="tabF" class="active">Tunai / Emas</button>
+      <button id="tabV">Barang Berharga</button>
+    </div>
+
+    <section id="list" class="list"></section>
+    <div id="empty" class="empty" style="display:none;">Tidak ada transaksi pending.</div>
+  </main>
+
+  <!-- Approve Modal -->
+  <div id="approveModal" class="overlay">
+    <div class="dialog">
+      <h2>Setujui Transaksi?</h2>
+      <p id="apSummary"></p>
+      <div class="dlg-actions">
+        <button class="btn outline" onclick="closeApprove()">Batal</button>
+        <button class="btn approve" onclick="confirmApprove()">Setujui</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reject Modal -->
+  <div id="rejectModal" class="overlay">
+    <div class="dialog">
+      <h2>Tolak Transaksi</h2>
+      <p>Alasan penolakan:</p>
+      <div class="field"><input id="rejReason" type="text" placeholder="Tuliskan alasan singkat" /></div>
+      <div class="dlg-actions">
+        <button class="btn outline" onclick="closeReject()">Batal</button>
+        <button class="btn reject" onclick="confirmReject()">Tolak</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Modal -->
+  <div id="imageModal" class="overlay img-modal" onclick="closeImage()">
+    <div class="dialog" onclick="event.stopPropagation()">
+      <img id="fullImg" src="" alt="Bukti Transaksi" />
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">Tindakan berhasil</div>
+
+  <script>
+    // -----------------------
+    // Mock Data (remember to replace later)
+    // -----------------------
+    let fungible = [
+      { id:"F001", customer:"John Doe",    acc:"11100045", type:"Setoran",   asset:"USD",  amount:50.00,   by:"Staff A", date:"29/10/2025 09:42", photo:"https://placehold.co/72x72?text=Foto" },
+      { id:"F002", customer:"Jane Smith",  acc:"11100067", type:"Penarikan", asset:"IDR",  amount:1000000, by:"Staff B", date:"29/10/2025 10:15", photo:"https://placehold.co/72x72?text=Foto" },
+      { id:"F003", customer:"Agus Santoso",acc:"11100082", type:"Setoran",   asset:"Gold", amount:2.5,     by:"Staff C", date:"29/10/2025 11:05", photo:"https://placehold.co/72x72?text=Foto" }
+    ];
+
+    let valuables = [
+      { id:"V001", customer:"Michael Tan", acc:"11100089", type:"Setoran",   desc:"Gelang emas 8 gr", by:"Staff D", date:"29/10/2025 11:22", photo:"https://placehold.co/72x72?text=Foto" },
+      { id:"V002", customer:"Lisa Wong",   acc:"11100092", type:"Penarikan", desc:"Cincin berlian",   by:"Staff E", date:"29/10/2025 11:55", photo:"https://placehold.co/72x72?text=Foto" },
+      { id:"V003", customer:"Rina Wijaya", acc:"11100105", type:"Setoran",   desc:"Kalung + batu safir", by:"Staff F", date:"29/10/2025 12:10", photo:"https://placehold.co/72x72?text=Foto" }
+    ];
+
+    // -----------------------
+    // State
+    // -----------------------
+    let activeTab = "F";           // "F"=fungible, "V"=valuables
+    let pendingAction = null;      // {tab:"F"/"V", id:"...", summary:"..."}
+
+    // -----------------------
+    // Helpers
+    // -----------------------
+    const fmtIDR = n => "Rp " + Math.round(n).toLocaleString("id-ID");
+    const fmt2   = n => Number(n).toLocaleString("id-ID", {minimumFractionDigits:2, maximumFractionDigits:2});
+
+    function goHome(){ window.location.href="home.html"; }
+    function showToast(msg){
+      const t=document.getElementById("toast");
+      t.textContent = msg; t.classList.add("show");
+      setTimeout(()=>t.classList.remove("show"), 2000);
+    }
+    function setEmptyVisibility(){
+      const list = document.getElementById("list");
+      const empty = document.getElementById("empty");
+      empty.style.display = list.children.length ? "none" : "block";
+    }
+
+    // -----------------------
+    // Rendering
+    // -----------------------
+    function render(){
+      const container = document.getElementById("list");
+      container.innerHTML = "";
+      const data = activeTab === "F" ? fungible : valuables;
+
+      data.forEach(tx=>{
+        const card = document.createElement("div");
+        card.className = "card" + (tx.type==="Penarikan" ? " withdraw" : "");
+        card.dataset.id = tx.id;
+
+        // top-right label
+        const badge = document.createElement("div");
+        badge.className = "badge-corner";
+        badge.textContent = tx.type; // Setoran / Penarikan
+        card.appendChild(badge);
+
+        // thumb
+        const img = document.createElement("img");
+        img.className = "thumb";
+        img.src = tx.photo;
+        img.alt = "Bukti Transaksi";
+        img.onerror = ()=>{ img.src="https://placehold.co/72x72?text=Foto"; };
+        img.onclick = ()=>openImage((tx.photo || "").replace("72x72","720x720"));
+        card.appendChild(img);
+
+        // body
+        const body = document.createElement("div");
+
+        const title = document.createElement("div");
+        title.className="title";
+        title.textContent = `${tx.customer} (${tx.acc})`;
+        const meta = document.createElement("div");
+        meta.className="meta";
+        meta.textContent = `Diajukan oleh ${tx.by} • ${tx.date}`;
+
+        body.appendChild(title);
+        body.appendChild(meta);
+
+        // vertical details
+        if(activeTab==="F"){
+          body.appendChild(detailRow("Aset", tx.asset));
+          const amt = tx.asset==="IDR" ? fmtIDR(tx.amount) :
+                      tx.asset==="Gold" ? (fmt2(tx.amount)).replace(",00","")+" gr" :
+                      `${tx.asset} ${fmt2(tx.amount)}`;
+          body.appendChild(detailRow("Jumlah", amt, true));
+        }else{
+          body.appendChild(detailRow("Keterangan", tx.desc));
+        }
+
+        // actions
+        const actions = document.createElement("div");
+        actions.className="actions";
+
+        const btnReject = document.createElement("button");
+        btnReject.className = "btn reject";
+        btnReject.innerHTML = '<span class="material-icons">close</span>Tolak';
+        btnReject.onclick = ()=>openReject(tx);
+
+        const btnApprove = document.createElement("button");
+        btnApprove.className = "btn approve";
+        btnApprove.innerHTML = '<span class="material-icons">check</span>Setujui';
+        btnApprove.onclick = ()=>openApprove(tx);
+
+        actions.appendChild(btnReject);
+        actions.appendChild(btnApprove);
+        body.appendChild(actions);
+
+        card.appendChild(body);
+        container.appendChild(card);
+      });
+
+      setEmptyVisibility();
+    }
+
+    function detailRow(key, val, mono=false){
+      const wrap = document.createElement("div");
+      wrap.className="detail";
+      const k = document.createElement("span"); k.className="key"; k.textContent=key;
+      const v = document.createElement("span"); v.className= mono? "mono" : ""; v.textContent=val;
+      wrap.appendChild(k); wrap.appendChild(v);
+      return wrap;
+    }
+
+    // -----------------------
+    // Toggle
+    // -----------------------
+    const tabF = document.getElementById("tabF");
+    const tabV = document.getElementById("tabV");
+    tabF.addEventListener("click", ()=>{ tabF.classList.add("active"); tabV.classList.remove("active"); activeTab="F"; render(); });
+    tabV.addEventListener("click", ()=>{ tabV.classList.add("active"); tabF.classList.remove("active"); activeTab="V"; render(); });
+
+    // -----------------------
+    // Approve / Reject flow
+    // -----------------------
+    function openApprove(tx){
+      pendingAction = {
+        tab: activeTab, id: tx.id,
+        summary: activeTab==="F"
+          ? `Nasabah: ${tx.customer} (${tx.acc})\nJenis: ${tx.type} ${tx.asset}\nJumlah: ${tx.asset==="IDR" ? fmtIDR(tx.amount) : (tx.asset==="Gold" ? (fmt2(tx.amount)).replace(",00","")+" gr" : tx.asset+" "+fmt2(tx.amount))}`
+          : `Nasabah: ${tx.customer} (${tx.acc})\nJenis: ${tx.type}\nKeterangan: ${tx.desc}`
+      };
+      document.getElementById("apSummary").innerText = pendingAction.summary;
+      document.getElementById("approveModal").style.display="flex";
+    }
+    function closeApprove(){ document.getElementById("approveModal").style.display="none"; }
+    function confirmApprove(){
+      if(!pendingAction) return;
+      removeTx(pendingAction.tab, pendingAction.id);
+      closeApprove();
+      showToast("Transaksi disetujui.");
+    }
+
+    function openReject(tx){
+      pendingAction = { tab: activeTab, id: tx.id };
+      document.getElementById("rejReason").value = "";
+      document.getElementById("rejectModal").style.display="flex";
+    }
+    function closeReject(){ document.getElementById("rejectModal").style.display="none"; }
+    function confirmReject(){
+      const reason = document.getElementById("rejReason").value.trim();
+      if(!reason){ showToast("Alasan penolakan wajib diisi."); return; }
+      if(!pendingAction) return;
+      removeTx(pendingAction.tab, pendingAction.id);
+      closeReject();
+      showToast("Transaksi ditolak.");
+    }
+
+    function removeTx(tab, id){
+      if(tab==="F"){ fungible = fungible.filter(t=>t.id!==id); }
+      else{ valuables = valuables.filter(t=>t.id!==id); }
+      render();
+    }
+
+    // -----------------------
+    // Image modal
+    // -----------------------
+    function openImage(url){
+      document.getElementById("fullImg").src = url || "https://placehold.co/720x720?text=Foto";
+      document.getElementById("imageModal").style.display="flex";
+    }
+    function closeImage(){ document.getElementById("imageModal").style.display="none"; }
+
+    // -----------------------
+    // Init
+    // -----------------------
+    document.addEventListener("DOMContentLoaded", render);
+  </script>
+</body>
+</html>

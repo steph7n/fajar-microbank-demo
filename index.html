@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fajar Microbank System - Masuk</title>
+
+  <!-- Material Design 3 CDN -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
+
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f9f9f9;
+    }
+    .card {
+      background: white;
+      padding: 40px 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 320px;
+    }
+    .logo {
+      font-size: 40px;
+      color: goldenrod;
+      margin-bottom: 10px;
+    }
+    h1 {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .account-info img {
+      border-radius: 50%;
+      width: 64px;
+      height: 64px;
+      margin-bottom: 10px;
+    }
+    .account-info h2 {
+      margin: 0;
+      font-size: 1rem;
+      color: #222;
+    }
+    .account-info p {
+      margin: 2px 0 10px 0;
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .btn {
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .btn:hover {
+      background-color: #155ab6;
+    }
+    a {
+      color: #1a73e8;
+      font-size: 0.9rem;
+      display: inline-block;
+      margin-top: 12px;
+      text-decoration: none;
+    }
+    footer {
+      margin-top: 30px;
+      color: #888;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo material-icons">wb_sunny</div>
+    <h1>Fajar Microbank System</h1>
+
+    <!-- Google Sign-in container -->
+    <div id="g_id_onload"
+      data-client_id="291182906471-ns7hikmr782u5cp72tjfnv3uflvatuh5.apps.googleusercontent.com"
+      data-context="signin"
+      data-ux_mode="popup"
+      data-callback="handleCredentialResponse"
+      data-auto_select="true">
+    </div>
+    <div class="g_id_signin" data-type="standard"></div>
+
+    <!-- Detected account UI -->
+    <div id="accountCard" style="display:none;">
+      <div class="account-info">
+        <img id="accountPic" src="" alt="Avatar" />
+        <h2 id="accountName"></h2>
+        <p id="accountEmail"></p>
+      </div>
+      <button id="continueBtn" class="btn">Lanjutkan sebagai</button>
+      <a id="switchAccount" href="https://accounts.google.com/Logout">Gunakan akun lain</a>
+    </div>
+  </div>
+
+  <footer>Hak Cipta © 2025 Toko Mas Fajar</footer>
+
+  <script>
+    // Decode JWT helper
+    function decodeJwtResponse(token) {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    }
+
+    // Handle Google Sign-in
+    function handleCredentialResponse(response) {
+      const data = decodeJwtResponse(response.credential);
+      localStorage.setItem("user", JSON.stringify({
+        name: data.name,
+        email: data.email,
+        picture: data.picture,
+        role: "Superadmin"
+      }));
+
+      // Show detected account
+      document.getElementById("accountPic").src = data.picture;
+      document.getElementById("accountName").textContent = data.name;
+      document.getElementById("accountEmail").textContent = data.email;
+      document.getElementById("continueBtn").textContent = "Lanjutkan sebagai " + data.name;
+      document.getElementById("accountCard").style.display = "block";
+      document.querySelector(".g_id_signin").style.display = "none";
+    }
+
+    document.getElementById("continueBtn")?.addEventListener("click", () => {
+      window.location.href = "home.html";
+    });
+  </script>
+</body>
+</html>
