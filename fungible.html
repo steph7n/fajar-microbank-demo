@@ -15,6 +15,11 @@
       --accent: var(--green);
     }
 
+    /* Normalize box-sizing and borders */
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Roboto', sans-serif;
       background-color: #fafafa;
@@ -61,13 +66,17 @@
 
     .toggle button {
       flex: 1;
-      border: none;
+      border: 1px solid #ccc;
+      border-right: none;
       padding: 12px;
       cursor: pointer;
       font-size: 1rem;
       color: #555;
       background: none;
       transition: all 0.3s ease;
+    }
+    .toggle button:last-child {
+      border-right: 1px solid #ccc;
     }
 
     .toggle button.active {
@@ -89,6 +98,7 @@
       border: 1px solid #ccc;
       border-radius: 8px;
       font-size: 1rem;
+      box-sizing: border-box;
     }
 
     input:disabled {
@@ -103,13 +113,15 @@
       border-radius: 8px;
       padding: 10px;
       margin-bottom: 16px;
+      box-sizing: border-box;
     }
 
     .amount-field input {
       border: none;
+      outline: none;
       flex: 1;
       font-size: 1rem;
-      outline: none;
+      background: transparent;
     }
 
     .unit-left, .unit-right {
@@ -129,12 +141,13 @@
       width: 100%;
       background-color: var(--accent);
       color: white;
-      border: none;
+      border: 1px solid #ccc;
       border-radius: 8px;
       padding: 12px;
       font-size: 1rem;
       cursor: pointer;
       transition: background 0.3s;
+      box-sizing: border-box;
     }
 
     button.submit-btn:disabled {
@@ -184,10 +197,11 @@
     .dialog button {
       margin-top: 16px;
       margin-right: 6px;
-      border: none;
+      border: 1px solid #ccc;
       padding: 8px 14px;
       border-radius: 6px;
       cursor: pointer;
+      box-sizing: border-box;
     }
 
     .confirm {
@@ -200,6 +214,64 @@
       color: #333;
     }
 
+    #verifySection label {
+      margin-top: 12px;
+    }
+
+    #verifySection input {
+      margin-bottom: 8px;
+    }
+
+    #verifySection button {
+      margin-top: 8px;
+      width: 100%;
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    #verifySection button:disabled {
+      background-color: #bbb;
+      cursor: not-allowed;
+    }
+
+    #phoneVerifySection {
+      margin-top: 12px;
+      display: none;
+    }
+
+    #custDetails {
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    /* Customer details: name, account and balances */
+    .cust-name {
+      font-size: 2rem;
+      font-weight: bold;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .cust-acc {
+      font-size: 1.3rem;
+      font-weight: 500;
+      color: #555;
+      display: block;
+      margin-bottom: 12px;
+    }
+    .cust-balance {
+      font-size: 1.1rem;
+      display: block;
+      margin-left: 0;
+      color: #555;
+    }
   </style>
 </head>
 <body>
@@ -209,40 +281,57 @@
   </header>
 
   <main>
-    <!-- Transaction Type Toggle -->
-    <div class="toggle" id="txToggle">
-      <button id="depositBtn" class="active">Setoran</button>
-      <button id="withdrawBtn">Penarikan</button>
+    <div id="verifySection">
+      <label for="verifyAcc">Nomor Rekening</label>
+      <input type="text" id="verifyAcc" placeholder="Masukkan 8 digit nomor rekening" maxlength="8" />
+      <button id="accNextBtn" disabled>Lanjut</button>
+
+      <div id="phoneVerifySection">
+        <label for="verifyPhone">Nomor HP</label>
+        <input type="text" id="verifyPhone" placeholder="Masukkan nomor HP" />
+        <div id="phoneHint" style="font-size:0.9rem; color:#555; margin-bottom:8px;"></div>
+        <button id="phoneNextBtn" disabled>Lanjut</button>
+      </div>
     </div>
 
-    <!-- Customer Lookup -->
-    <label for="custNum">Nomor Nasabah</label>
-    <input type="text" id="custNum" placeholder="Masukkan 8 digit nomor nasabah" maxlength="8" />
-    <div id="custInfo" style="font-size:0.9rem; margin-bottom:12px; color:#555;"></div>
+    <div id="txSection" style="display:none;">
+      <div id="custDetails">
+        <span class="cust-name"></span>
+        <span class="cust-acc"></span>
+      </div>
 
-    <!-- Asset Type Toggle -->
-    <div class="toggle" id="assetToggle">
-      <button class="active">IDR</button>
-      <button>USD</button>
-      <button>EUR</button>
-      <button>SGD</button>
-      <button>Emas</button>
+      <!-- Transaction Type Toggle -->
+      <div class="toggle" id="txToggle">
+        <button id="depositBtn" class="active">Setoran</button>
+        <button id="withdrawBtn">Penarikan</button>
+      </div>
+
+      <!-- Removed Nomor Nasabah input -->
+
+      <!-- Asset Type Toggle -->
+      <div class="toggle" id="assetToggle">
+        <button class="active">IDR</button>
+        <button>USD</button>
+        <button>EUR</button>
+        <button>SGD</button>
+        <button>Emas</button>
+      </div>
+
+      <!-- Amount -->
+      <label for="amount">Jumlah</label>
+      <div class="amount-field">
+        <div class="unit-left" id="unitLeft">IDR</div>
+        <input type="number" id="amount" placeholder="0.00" min="0" step="any" />
+        <div class="unit-right" id="unitRight" style="display:none;">gr</div>
+      </div>
+
+      <!-- Proof Photo -->
+      <label for="proof">Bukti Transaksi</label>
+      <input type="file" id="proof" accept="image/*" />
+      <img id="preview" class="photo-preview" />
+
+      <button id="submitBtn" class="submit-btn" disabled>Simpan Transaksi</button>
     </div>
-
-    <!-- Amount -->
-    <label for="amount">Jumlah</label>
-    <div class="amount-field">
-      <div class="unit-left" id="unitLeft">IDR</div>
-      <input type="number" id="amount" placeholder="0.00" min="0" step="any" />
-      <div class="unit-right" id="unitRight" style="display:none;">gr</div>
-    </div>
-
-    <!-- Proof Photo -->
-    <label for="proof">Bukti Transaksi</label>
-    <input type="file" id="proof" accept="image/*" />
-    <img id="preview" class="photo-preview" />
-
-    <button id="submitBtn" class="submit-btn" disabled>Simpan Transaksi</button>
   </main>
 
   <footer>Hak Cipta © 2025 Toko Mas Fajar</footer>
@@ -270,30 +359,109 @@
 
   <script>
     const customers = [
-      { acc: "11100045", name: "John Doe", phone: "081234987" },
+      { acc: "11100045", name: "John Doe", phone: "087700017788" },
       { acc: "11100046", name: "Maria Lestari", phone: "0821456789" }
     ];
 
+    const balances = {
+      "11100045": {IDR:1000000,USD:50,EUR:20,SGD:0,Gold:2.5},
+      "11100046": {IDR:500000,USD:0,EUR:0,SGD:30,Gold:0}
+    };
+
     const root = document.documentElement;
-    const custNum = document.getElementById("custNum");
-    const custInfo = document.getElementById("custInfo");
-    const submitBtn = document.getElementById("submitBtn");
+    const verifyAcc = document.getElementById("verifyAcc");
+    const accNextBtn = document.getElementById("accNextBtn");
+    const verifyPhone = document.getElementById("verifyPhone");
+    const phoneNextBtn = document.getElementById("phoneNextBtn");
+    const phoneVerifySection = document.getElementById("phoneVerifySection");
+    const phoneHint = document.getElementById("phoneHint");
+
+    const txSection = document.getElementById("txSection");
+    const custDetails = document.getElementById("custDetails");
+
+    const depositBtn = document.getElementById("depositBtn");
+    const withdrawBtn = document.getElementById("withdrawBtn");
+    const txToggle = document.getElementById("txToggle");
+
+    const assetToggle = document.getElementById("assetToggle");
+    const unitLeft = document.getElementById("unitLeft");
+    const unitRight = document.getElementById("unitRight");
+
     const amountInput = document.getElementById("amount");
     const proofInput = document.getElementById("proof");
     const preview = document.getElementById("preview");
+    const submitBtn = document.getElementById("submitBtn");
 
     let currentCustomer = null;
     let txType = "Setoran";
     let assetType = "IDR";
 
+    // Verification step - enable accNextBtn only if length 8
+    verifyAcc.addEventListener("input", () => {
+      accNextBtn.disabled = verifyAcc.value.trim().length !== 8;
+      // Reset phone verification if account changes
+      phoneVerifySection.style.display = "none";
+      verifyPhone.value = "";
+      phoneNextBtn.disabled = true;
+      phoneHint.textContent = "";
+    });
+
+    accNextBtn.addEventListener("click", () => {
+      const accVal = verifyAcc.value.trim();
+      currentCustomer = customers.find(c => c.acc === accVal);
+      if (currentCustomer) {
+        // Show phone verification section
+        phoneVerifySection.style.display = "block";
+        // Show phone hint with last 4 digits
+        const phone = currentCustomer.phone;
+        const last4 = phone.slice(-4);
+        phoneHint.textContent = "Nomor HP: 08xxx" + last4;
+      } else {
+        alert("Nomor rekening tidak ditemukan.");
+        phoneVerifySection.style.display = "none";
+        verifyPhone.value = "";
+        phoneNextBtn.disabled = true;
+      }
+    });
+
+    verifyPhone.addEventListener("input", () => {
+      // Enable phoneNextBtn only if input length > 0
+      phoneNextBtn.disabled = verifyPhone.value.trim().length === 0;
+    });
+
+    phoneNextBtn.addEventListener("click", () => {
+      const phoneVal = verifyPhone.value.trim();
+      if (phoneVal === currentCustomer.phone) {
+        // Verification successful
+        document.getElementById("verifySection").style.display = "none";
+        txSection.style.display = "block";
+        displayCustomerDetails();
+      } else {
+        alert("Nomor HP tidak cocok.");
+      }
+    });
+
+    function displayCustomerDetails() {
+      if (!currentCustomer) return;
+      const bal = balances[currentCustomer.acc];
+      let details = `<span class="cust-name">${currentCustomer.name}</span>`;
+      details += `<span class="cust-acc">No. Rekening: ${currentCustomer.acc}</span>`;
+      if (bal.IDR > 0) details += `<span class="cust-balance">Saldo IDR: Rp ${bal.IDR.toLocaleString('id-ID')}</span>`;
+      if (bal.USD > 0) details += `<span class="cust-balance">Saldo USD: ${bal.USD}</span>`;
+      if (bal.EUR > 0) details += `<span class="cust-balance">Saldo EUR: ${bal.EUR}</span>`;
+      if (bal.SGD > 0) details += `<span class="cust-balance">Saldo SGD: ${bal.SGD}</span>`;
+      if (bal.Gold > 0) details += `<span class="cust-balance">Saldo Emas: ${bal.Gold} gr</span>`;
+      custDetails.innerHTML = details;
+    }
+
     // Toggle: Transaction Type
-    document.getElementById("depositBtn").addEventListener("click", () => {
+    depositBtn.addEventListener("click", () => {
       txType = "Setoran";
       root.style.setProperty("--accent", "var(--green)");
       setActiveToggle("txToggle", 0);
       updateAccentColor();
     });
-    document.getElementById("withdrawBtn").addEventListener("click", () => {
+    withdrawBtn.addEventListener("click", () => {
       txType = "Penarikan";
       root.style.setProperty("--accent", "var(--orange)");
       setActiveToggle("txToggle", 1);
@@ -338,31 +506,15 @@
     }
 
     // Toggle: Asset Type
-    document.querySelectorAll("#assetToggle button").forEach(btn => {
+    assetToggle.querySelectorAll("button").forEach(btn => {
       btn.addEventListener("click", () => {
-        document.querySelectorAll("#assetToggle button").forEach(b => b.classList.remove("active"));
+        assetToggle.querySelectorAll("button").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         assetType = btn.textContent.trim();
-        document.getElementById("unitLeft").textContent = (assetType === "Emas") ? "" : assetType;
-        document.getElementById("unitRight").style.display = (assetType === "Emas") ? "block" : "none";
+        unitLeft.textContent = (assetType === "Emas") ? "" : assetType;
+        unitRight.style.display = (assetType === "Emas") ? "block" : "none";
         updateAccentColor();
       });
-    });
-
-    // Customer lookup
-    custNum.addEventListener("input", () => {
-      const val = custNum.value.trim();
-      currentCustomer = customers.find(c => c.acc === val);
-      if (currentCustomer) {
-        const masked = "xxx" + currentCustomer.phone.slice(-4);
-        custInfo.style.color = "#333";
-        custInfo.textContent = `${currentCustomer.name} (${masked})`;
-        validateForm();
-      } else {
-        custInfo.style.color = "red";
-        custInfo.textContent = val.length === 8 ? "Nomor nasabah tidak ditemukan." : "";
-        submitBtn.disabled = true;
-      }
     });
 
     // Proof photo preview
@@ -392,7 +544,7 @@
     // Submit button
     submitBtn.addEventListener("click", () => {
       document.getElementById("confCustNum").textContent = "Nomor Nasabah: " + currentCustomer.acc;
-      document.getElementById("confCustName").textContent = "Nama Nasabah: " + custInfo.textContent;
+      document.getElementById("confCustName").textContent = "Nama Nasabah: " + custDetails.textContent.split('\n')[0].replace('Nama: ', '');
       document.getElementById("confTxType").textContent = "Jenis Transaksi: " + txType;
       document.getElementById("confAmount").textContent = "Jumlah: " + (assetType === "Emas" ? amountInput.value + " gr" : assetType + " " + amountInput.value);
       document.getElementById("confirmDialog").style.display = "flex";

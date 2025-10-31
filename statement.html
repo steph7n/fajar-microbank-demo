@@ -34,12 +34,19 @@
     header .material-icons{ color:var(--accent); cursor:pointer }
     header h1{ margin:0; font-size:1.1rem; color:#333 }
 
-    main{
-      max-width:960px; margin:24px auto; padding:0 16px 32px 16px;
+    main {
+      display: flex;
+      justify-content: center;
+      padding: 0 16px 32px 16px;
     }
-    .card{
-      background:#fff; border-radius:16px; box-shadow:0 4px 10px rgba(0,0,0,.05);
-      padding:20px; margin-bottom:16px;
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,.05);
+      padding: 20px;
+      margin-bottom: 16px;
+      max-width: 480px;
+      width: 100%;
     }
     label{ display:block; font-weight:500; color:#333; margin-bottom:6px }
     input[type="text"]{
@@ -109,68 +116,70 @@
   </header>
 
   <main>
-    <!-- STEP 1: Account Number -->
-    <section id="step1" class="step active card">
-      <label for="accInput">Nomor Rekening (8 digit)</label>
-      <input id="accInput" type="text" placeholder="Contoh: 12300455" maxlength="8" />
-      <div class="actions">
-        <button id="next1" class="btn" disabled>Lanjut</button>
-      </div>
-      <div id="err1" class="error"></div>
-      <div id="ban1" class="banner" style="display:none;">Nomor HP salah. Silakan coba lagi.</div>
-    </section>
-
-    <!-- STEP 2: Phone Verification -->
-    <section id="step2" class="step card">
-      <div style="margin-bottom:8px; font-weight:500;">Masukkan Nomor HP Nasabah (tanpa spasi dan tanda baca)</div>
-      <div id="phoneHint" class="hint">Nomor HP: 08xxx0000</div>
-      <input id="phoneInput" type="text" placeholder="08xxxxxxxxx"/>
-      <div class="actions">
-        <button id="next2" class="btn">Lanjut</button>
-        <button class="btn secondary" onclick="backToStep(1)">Kembali</button>
-      </div>
-      <div id="err2" class="error"></div>
-    </section>
-
-    <!-- STEP 3: Statement Options -->
-    <section id="step3" class="step card">
-      <!-- Customer header -->
-      <div id="custHeader" style="margin-bottom:12px;">
-        <div style="font-weight:600; margin-bottom:4px" id="custName">Nama Nasabah: -</div>
-        <div class="hint" id="custAcc">Nomor Rekening: -</div>
-      </div>
-
-      <!-- Balances -->
-      <div class="chips" id="balanceChips"></div>
-
-      <!-- Mode switch -->
-      <div style="margin-top:16px">
-        <div class="toggle3" id="modeToggle">
-          <button data-mode="monthly" class="active">Bulanan</button>
-          <button data-mode="range">Rentang Tanggal</button>
-          <button data-mode="all">Seluruh Riwayat</button>
-        </div>
-      </div>
-
-      <!-- MONTHLY -->
-      <div id="monthlyBox" class="months"></div>
-
-      <!-- RANGE -->
-      <div id="rangeBox" class="range-box" style="display:none;">
-        <div class="range-help" id="rangeHelp">Pilih tanggal mulai</div>
-        <div class="range-display" id="rangeDisplay" style="display:none;"></div>
+    <div class="card" style="margin: 32px auto 0 auto;">
+      <!-- STEP 1: Account Number -->
+      <section id="step1" class="step active">
+        <label for="accInput">Nomor Rekening Nasabah</label>
+        <input id="accInput" type="text" placeholder="Masukkan 8 digit nomor nasabah" maxlength="8" />
         <div class="actions">
-          <button id="showRange" class="btn" disabled>Tampilkan</button>
+          <button id="next1" class="btn" disabled>Lanjut</button>
         </div>
-      </div>
+        <div id="err1" class="error"></div>
+        <div id="ban1" class="banner" style="display:none;">Nomor HP salah. Silakan coba lagi.</div>
+      </section>
 
-      <!-- ALL -->
-      <div id="allBox" style="display:none; margin-top:12px;">
+      <!-- STEP 2: Phone Verification -->
+      <section id="step2" class="step">
+        <label for="phoneInput">Masukkan nomor HP nasabah (tanpa spasi dan tanda baca)</label>
+        <div id="phoneHint" class="hint">Nomor HP: 08xxx0000</div>
+        <input id="phoneInput" type="text" placeholder="08xxxxxxxxx"/>
         <div class="actions">
-          <button id="showAll" class="btn">Tampilkan Seluruh Riwayat</button>
+          <button id="next2" class="btn">Lanjut</button>
+          <button class="btn secondary" onclick="backToStep(1)">Kembali</button>
         </div>
-      </div>
-    </section>
+        <div id="err2" class="error"></div>
+      </section>
+
+      <!-- STEP 3: Statement Options -->
+      <section id="step3" class="step">
+        <!-- Customer header -->
+        <div id="custHeader" style="margin-bottom:12px;">
+          <div id="custName">Nama Nasabah: -</div>
+          <div class="hint" id="custAcc">Nomor Rekening: -</div>
+        </div>
+
+        <!-- Balances -->
+        <div class="chips" id="balanceChips"></div>
+
+        <!-- Mode switch -->
+        <div style="margin-top:16px">
+          <div class="toggle3" id="modeToggle">
+            <button data-mode="monthly" class="active">Bulanan</button>
+            <button data-mode="range">Rentang Tanggal</button>
+            <button data-mode="all">Seluruh Riwayat</button>
+          </div>
+        </div>
+
+        <!-- MONTHLY -->
+        <div id="monthlyBox" class="months"></div>
+
+        <!-- RANGE -->
+        <div id="rangeBox" class="range-box" style="display:none;">
+          <div class="range-help" id="rangeHelp">Pilih tanggal mulai</div>
+          <div class="range-display" id="rangeDisplay" style="display:none;"></div>
+          <div class="actions">
+            <button id="showRange" class="btn" disabled>Tampilkan</button>
+          </div>
+        </div>
+
+        <!-- ALL -->
+        <div id="allBox" style="display:none; margin-top:12px;">
+          <div class="actions">
+            <button id="showAll" class="btn">Tampilkan Seluruh Riwayat</button>
+          </div>
+        </div>
+      </section>
+    </div>
   </main>
 
   <!-- Hidden container for PDF building -->
@@ -302,33 +311,26 @@
     }
 
     function renderCustomerSummary(c){
-      // Customer name, big and bold
+      // Name header
       custHeaderName.textContent = c.name;
-      custHeaderName.style.fontSize = "1.4rem";
+      custHeaderName.style.fontSize = "1.8rem";
       custHeaderName.style.fontWeight = "700";
       custHeaderName.style.marginBottom = "4px";
-      // Account number, moderately larger, gray
+      // Account number header
       custHeaderAcc.textContent = `No. Rekening: ${c.acc}`;
-      custHeaderAcc.style.fontSize = "1.1rem";
-      custHeaderAcc.style.color = "#888";
-      custHeaderAcc.style.marginBottom = "6px";
-      // Balances: each on its own line under the account number
+      custHeaderAcc.style.fontSize = "1.3rem";
+      custHeaderAcc.style.fontWeight = "500";
+      custHeaderAcc.style.color = "#555";
+      custHeaderAcc.style.marginBottom = "10px";
+      // Balances
       balanceChips.innerHTML = "";
-      const lines = [
-        `Saldo IDR: ${fmtIDR(c.balances.IDR)}`,
-        `Saldo USD: ${fmt2(c.balances.USD)}`,
-        `Saldo SGD: ${fmt2(c.balances.SGD)}`,
-        `Saldo EUR: ${fmt2(c.balances.EUR)}`,
-        `Saldo Emas: ${fmtGold(c.balances.Gold)}`
-      ];
-      lines.forEach(txt => {
-        const div = document.createElement("div");
-        div.textContent = txt;
-        div.style.fontSize = "1rem";
-        div.style.marginBottom = "6px";
-        div.style.fontWeight = "400";
-        div.style.display = "block";
-        balanceChips.appendChild(div);
+      Object.entries(c.balances).forEach(([key, value]) => {
+        const line = document.createElement("div");
+        const formatted = key === "IDR" ? fmtIDR(value) : (key === "Gold" ? fmtGold(value) : fmt2(value));
+        line.textContent = `Saldo ${key}: ${formatted}`;
+        line.style.fontSize = "1rem";
+        line.style.marginBottom = "6px";
+        balanceChips.appendChild(line);
       });
     }
 

@@ -14,6 +14,7 @@
       --orange: #f39c12;
       --accent: var(--green);
     }
+    * { box-sizing: border-box; }
 
     body {
       font-family: 'Roboto', sans-serif;
@@ -91,6 +92,27 @@
       font-size: 1rem;
       font-family: 'Roboto', sans-serif;
       resize: vertical;
+      outline: none;
+    }
+
+    input:focus, textarea:focus {
+      border-color: #8ccfa5;
+      box-shadow: 0 0 0 2px rgba(46, 204, 113, .15);
+    }
+
+    .cust-name {
+      font-size: 2rem;
+      font-weight: 700;
+      display: block;
+      margin: 0 0 8px 0;
+      color: #333;
+    }
+    .cust-acc {
+      font-size: 1.3rem;
+      font-weight: 500;
+      color: #555;
+      display: block;
+      margin-bottom: 16px;
     }
 
     textarea {
@@ -136,6 +158,7 @@
       background: rgba(0,0,0,0.4);
       justify-content: center;
       align-items: center;
+      z-index: 1000;
     }
 
     .dialog {
@@ -146,6 +169,7 @@
       max-width: 360px;
       text-align: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      position: relative;
     }
 
     .dialog h2 {
@@ -178,6 +202,96 @@
       color: #333;
     }
 
+    /* Verification Section */
+    #verifySection label {
+      margin-top: 12px;
+    }
+    #verifySection input {
+      margin-bottom: 8px;
+    }
+    #verifyHint {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 12px;
+    }
+    #verifyError {
+      color: red;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+    }
+    #custDetails {
+      margin-bottom: 16px;
+      color: #333;
+    }
+    #custBalances {
+      margin-bottom: 16px;
+      font-weight: 500;
+      color: #333;
+    }
+    #custBalances p {
+      margin: 4px 0;
+    }
+
+    /* Valuables List */
+    #valuablesList {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+
+    .valuable-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: white;
+    }
+
+    .valuable-photo {
+      width: 60px;
+      height: 60px;
+      border-radius: 8px;
+      object-fit: cover;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .valuable-info {
+      flex-grow: 1;
+      text-align: left;
+    }
+
+    .valuable-desc {
+      font-weight: 600;
+      margin: 0 0 4px 0;
+      color: #333;
+    }
+
+    .valuable-date {
+      font-size: 0.85rem;
+      color: #666;
+      margin: 0;
+    }
+
+    .withdraw-btn {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background-color 0.3s;
+      flex-shrink: 0;
+    }
+
+    .withdraw-btn:hover {
+      background-color: #27ae60;
+    }
+
   </style>
 </head>
 <body>
@@ -187,27 +301,47 @@
   </header>
 
   <main>
-    <!-- Transaction Type Toggle -->
-    <div class="toggle" id="txToggle">
-      <button id="depositBtn" class="active">Setoran</button>
-      <button id="withdrawBtn">Penarikan</button>
+    <div id="verifySection">
+      <label for="verifyAcc">Nomor Rekening</label>
+      <input type="text" id="verifyAcc" placeholder="Masukkan 8 digit nomor rekening" maxlength="8" />
+      <button id="btnAccNext" class="submit-btn" style="margin-top:6px;" disabled>Lanjut</button>
+
+      <label for="verifyPhone" style="margin-top:14px; display:none;">Nomor HP</label>
+      <input type="text" id="verifyPhone" placeholder="Masukkan nomor HP" style="display:none;" />
+      <div id="verifyHint" style="display:none; font-size:0.9rem; color:#555; margin-bottom:6px;"></div>
+      <button id="btnPhoneNext" class="submit-btn" style="display:none;" disabled>Lanjut</button>
+
+      <div id="verifyError" style="margin-top:8px;"></div>
     </div>
 
-    <!-- Customer Lookup -->
-    <label for="custNum">Nomor Nasabah</label>
-    <input type="text" id="custNum" placeholder="Masukkan 8 digit nomor nasabah" maxlength="8" />
-    <div id="custInfo" style="font-size:0.9rem; margin-bottom:12px; color:#555;"></div>
+    <div id="txSection" style="display:none;">
+      <div id="custDetails">
+        <span class="cust-name"></span>
+        <span class="cust-acc"></span>
+      </div>
 
-    <!-- Item Description -->
-    <label for="desc">Keterangan Barang Bernilai</label>
-    <textarea id="desc" placeholder="Tuliskan deskripsi barang bernilai (min. 10 karakter)"></textarea>
+      <!-- Transaction Type Toggle -->
+      <div class="toggle" id="txToggle">
+        <button id="depositBtn" class="active">Setoran</button>
+        <button id="withdrawBtn">Penarikan</button>
+      </div>
 
-    <!-- Proof Photo -->
-    <label for="proof">Foto Barang</label>
-    <input type="file" id="proof" accept="image/*" />
-    <img id="preview" class="photo-preview" />
+      <div id="depositForm">
+        <!-- Item Description -->
+        <label for="desc">Keterangan Barang Bernilai</label>
+        <textarea id="desc" placeholder="Tuliskan deskripsi barang bernilai (min. 10 karakter)"></textarea>
 
-    <button id="submitBtn" class="submit-btn" disabled>Simpan Transaksi</button>
+        <!-- Proof Photo -->
+        <label for="proof">Foto Barang</label>
+        <input type="file" id="proof" accept="image/*" />
+        <img id="preview" class="photo-preview" />
+
+        <button id="submitBtn" class="submit-btn" disabled>Simpan Transaksi</button>
+      </div>
+
+      <div id="valuablesList" style="display:none;"></div>
+    </div>
+
   </main>
 
   <footer>Hak Cipta © 2025 Toko Mas Fajar</footer>
@@ -233,33 +367,144 @@
     </div>
   </div>
 
+  <!-- Photo Modal -->
+  <div id="photoModal" class="dialog-overlay" onclick="closePhotoModal(event)">
+    <div class="dialog" style="max-width:none; width:auto; padding:0; background:none;">
+      <img id="photoModalImg" src="" alt="Foto Barang Besar" style="max-width:90vw; max-height:80vh; border-radius:12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);" />
+    </div>
+  </div>
+
+  <!-- Withdrawal Modal -->
+  <div id="withdrawModal" class="dialog-overlay">
+    <div class="dialog">
+      <h2>Ajukan Penarikan Barang</h2>
+      <p id="withdrawItem"></p>
+      <input type="file" id="withdrawProof" accept="image/*" />
+      <button class="confirm" onclick="submitWithdraw()">Kirim Permintaan</button>
+      <button class="cancel" onclick="closeDialog('withdrawModal')">Batal</button>
+    </div>
+  </div>
+
+  <!-- Withdrawal Success Dialog -->
+  <div id="withdrawSuccessDialog" class="dialog-overlay">
+    <div class="dialog">
+      <h2>Permintaan Penarikan Berhasil Dikirim</h2>
+      <button class="confirm" onclick="closeDialog('withdrawSuccessDialog')">Tutup</button>
+    </div>
+  </div>
+
   <script>
     const customers = [
-      { acc: "11100045", name: "John Doe", phone: "081234987" },
-      { acc: "11100046", name: "Maria Lestari", phone: "0821456789" }
+      { acc: "11100045", name: "John Doe", phone: "087700017788", balances: { saldo: 5000000, tabungan: 2000000 } },
+      { acc: "11100046", name: "Maria Lestari", phone: "0821456789", balances: { saldo: 7500000, tabungan: 3500000 } }
+    ];
+
+    const valuables = [
+      {desc: "Gelang Emas 8 gr", date: "2025-10-09", photo: "https://via.placeholder.com/80"},
+      {desc: "Liontin Berlian", date: "2025-10-12", photo: "https://via.placeholder.com/80"}
     ];
 
     const root = document.documentElement;
-    const custNum = document.getElementById("custNum");
-    const custInfo = document.getElementById("custInfo");
+
+    // Verification elements
+    const verifyAcc = document.getElementById("verifyAcc");
+    const verifyPhone = document.getElementById("verifyPhone");
+    const verifyHint = document.getElementById("verifyHint");
+    const verifyError = document.getElementById("verifyError");
+    const btnAccNext = document.getElementById("btnAccNext");
+    const btnPhoneNext = document.getElementById("btnPhoneNext");
+    const phoneLabel = document.querySelector('label[for="verifyPhone"]');
+
+    // Transaction elements
+    const txSection = document.getElementById("txSection");
+    const custDetails = document.getElementById("custDetails");
     const descInput = document.getElementById("desc");
     const proofInput = document.getElementById("proof");
     const preview = document.getElementById("preview");
     const submitBtn = document.getElementById("submitBtn");
+    const valuablesList = document.getElementById("valuablesList");
 
-    let currentCustomer = null;
+    // Transaction type toggle
     let txType = "Setoran";
+
+    // Current customer after verification
+    let currentCustomer = null;
+
+    function setMode(mode) {
+      txType = mode;
+      const isDeposit = mode === "Setoran";
+      document.getElementById("depositForm").style.display = isDeposit ? "block" : "none";
+      document.getElementById("valuablesList").style.display = isDeposit ? "none" : "block";
+      validateForm();
+    }
+
+    // Verification two-step flow
+    verifyAcc.addEventListener("input", () => {
+      verifyError.textContent = "";
+      btnAccNext.disabled = true;
+      if (verifyAcc.value.trim().length === 8) {
+        const cust = customers.find(c => c.acc === verifyAcc.value.trim());
+        if (cust) {
+          btnAccNext.disabled = false;
+        } else {
+          verifyError.textContent = "Nomor rekening tidak ditemukan.";
+        }
+      }
+    });
+
+    btnAccNext.addEventListener("click", () => {
+      const cust = customers.find(c => c.acc === verifyAcc.value.trim());
+      if (!cust) { verifyError.textContent = "Nomor rekening tidak ditemukan."; return; }
+      currentCustomer = cust;
+      const masked = "08xxx" + cust.phone.slice(-4);
+      document.getElementById("verifyHint").textContent = "Nomor HP: " + masked;
+      phoneLabel.style.display = "block";
+      verifyPhone.style.display = "block";
+      document.getElementById("verifyHint").style.display = "block";
+      btnPhoneNext.style.display = "block";
+      btnPhoneNext.disabled = true;
+    });
+
+    verifyPhone.addEventListener("input", () => {
+      verifyError.textContent = "";
+      btnPhoneNext.disabled = verifyPhone.value.trim().length === 0;
+    });
+
+    btnPhoneNext.addEventListener("click", () => {
+      if (!currentCustomer) return;
+      if (verifyPhone.value.trim() !== currentCustomer.phone) {
+        verifyError.textContent = "Nomor telepon tidak sesuai.";
+        return;
+      }
+      document.getElementById("verifySection").style.display = "none";
+      txSection.style.display = "block";
+      showCustomerDetails();
+      populateValuables();
+      setMode("Setoran");
+      updateAccentColor();
+    });
+
+    function showCustomerDetails() {
+      const nameEl = custDetails.querySelector('.cust-name');
+      const accEl = custDetails.querySelector('.cust-acc');
+      if (nameEl) {
+        nameEl.textContent = currentCustomer.name;
+      }
+      if (accEl) {
+        accEl.textContent = "No. Rekening: " + currentCustomer.acc;
+      }
+    }
 
     // Transaction Type Toggle
     document.getElementById("depositBtn").addEventListener("click", () => {
-      txType = "Setoran";
+      setMode("Setoran");
       root.style.setProperty("--accent", "var(--green)");
       setActiveToggle("txToggle", 0);
       updateAccentColor();
     });
 
     document.getElementById("withdrawBtn").addEventListener("click", () => {
-      txType = "Penarikan";
+      setMode("Penarikan");
       root.style.setProperty("--accent", "var(--orange)");
       setActiveToggle("txToggle", 1);
       updateAccentColor();
@@ -295,21 +540,6 @@
       }
     }
 
-    // Customer lookup
-    custNum.addEventListener("input", () => {
-      const val = custNum.value.trim();
-      currentCustomer = customers.find(c => c.acc === val);
-      if (currentCustomer) {
-        const masked = "xxx" + currentCustomer.phone.slice(-4);
-        custInfo.style.color = "#333";
-        custInfo.textContent = `${currentCustomer.name} (${masked})`;
-      } else {
-        custInfo.style.color = "red";
-        custInfo.textContent = val.length === 8 ? "Nomor nasabah tidak ditemukan." : "";
-      }
-      validateForm();
-    });
-
     // Description validation
     descInput.addEventListener("input", validateForm);
 
@@ -331,6 +561,7 @@
 
     // Validate form
     function validateForm() {
+      if (txType === "Penarikan") { submitBtn.disabled = true; updateAccentColor(); return; }
       const valid = currentCustomer && descInput.value.trim().length >= 10 && proofInput.files.length > 0;
       submitBtn.disabled = !valid;
       updateAccentColor();
@@ -339,7 +570,7 @@
     // Submit button behavior
     submitBtn.addEventListener("click", () => {
       document.getElementById("confCustNum").textContent = "Nomor Nasabah: " + currentCustomer.acc;
-      document.getElementById("confCustName").textContent = "Nama Nasabah: " + custInfo.textContent;
+      document.getElementById("confCustName").textContent = "Nama Nasabah: " + currentCustomer.name;
       document.getElementById("confTxType").textContent = "Jenis Transaksi: " + txType;
       document.getElementById("confDesc").textContent = "Keterangan: " + descInput.value.trim();
       document.getElementById("confirmDialog").style.display = "flex";
@@ -356,6 +587,81 @@
 
     function goHome() {
       window.location.href = "home.html";
+    }
+
+    // Populate valuables list
+    function populateValuables() {
+      valuablesList.innerHTML = "";
+      valuables.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "valuable-card";
+
+        const img = document.createElement("img");
+        img.src = item.photo && item.photo.trim() !== "" ? item.photo : "https://via.placeholder.com/80?text=Foto";
+        img.alt = "Foto Barang";
+        img.className = "valuable-photo";
+        img.onclick = () => enlargePhoto(img);
+
+        const info = document.createElement("div");
+        info.className = "valuable-info";
+
+        const descP = document.createElement("p");
+        descP.className = "valuable-desc";
+        descP.textContent = item.desc;
+
+        const dateP = document.createElement("p");
+        dateP.className = "valuable-date";
+        const d = new Date(item.date);
+        const options = { day: 'numeric', month: 'short', year: 'numeric' };
+        dateP.textContent = `Disimpan sejak ${d.toLocaleDateString('id-ID', options)}`;
+
+        info.appendChild(descP);
+        info.appendChild(dateP);
+
+        const btn = document.createElement("button");
+        btn.className = "withdraw-btn";
+        btn.textContent = "Ajukan Penarikan";
+        btn.onclick = () => openWithdrawModal(item.desc);
+
+        card.appendChild(img);
+        card.appendChild(info);
+        card.appendChild(btn);
+
+        valuablesList.appendChild(card);
+      });
+    }
+
+    // Enlarge photo modal
+    function enlargePhoto(img) {
+      const modal = document.getElementById("photoModal");
+      const modalImg = document.getElementById("photoModalImg");
+      modalImg.src = img.src;
+      modal.style.display = "flex";
+    }
+
+    function closePhotoModal(event) {
+      if (event.target.id === "photoModal" || event.target.id === "photoModalImg") {
+        document.getElementById("photoModal").style.display = "none";
+      }
+    }
+
+    // Withdrawal modal
+    const withdrawItemP = document.getElementById("withdrawItem");
+    const withdrawProofInput = document.getElementById("withdrawProof");
+
+    function openWithdrawModal(desc) {
+      withdrawItemP.textContent = desc;
+      withdrawProofInput.value = "";
+      document.getElementById("withdrawModal").style.display = "flex";
+    }
+
+    function submitWithdraw() {
+      if (withdrawProofInput.files.length === 0) {
+        alert("Silakan unggah bukti penarikan.");
+        return;
+      }
+      closeDialog("withdrawModal");
+      document.getElementById("withdrawSuccessDialog").style.display = "flex";
     }
   </script>
 </body>
